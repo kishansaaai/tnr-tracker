@@ -12,6 +12,7 @@ export default function Volunteers() {
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const [profiles, setProfiles] = useState([])
+  const [pointsMap, setPointsMap] = useState({})
   const [loading, setLoading] = useState(true)
   const { traps } = useTraps()
 
@@ -25,11 +26,31 @@ export default function Volunteers() {
 
   async function fetchProfiles() {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: true })
-    if (!error) setProfiles(data || [])
+
+    const { data: catsData, error: catsError } = await supabase
+      .from('cats')
+      .select('logged_by')
+
+    if (!profilesError && !catsError) {
+      setProfiles(profilesData || [])
+      
+      const counts = {}
+      ;(catsData || []).forEach(cat => {
+        if (cat.logged_by) {
+          counts[cat.logged_by] = (counts[cat.logged_by] || 0) + 1
+        }
+      })
+      
+      const pts = {}
+      ;(profilesData || []).forEach(p => {
+        pts[p.id] = (counts[p.id] || 0) * 50 // 50 points per cat
+      })
+      setPointsMap(pts)
+    }
     setLoading(false)
   }
 
@@ -47,24 +68,14 @@ export default function Volunteers() {
     }
   }
 
-  const getMockPoints = (profile) => {
-    if (!profile.id) return 0
-    let hash = 0
-    const str = profile.id
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    return (Math.abs(hash) % 800) + 150
-  }
-
   const getTitle = (points) => {
-    if (points > 800) return '🏆 Grand Cat Master'
-    if (points > 500) return '🥇 Whiskers Guardian'
-    if (points > 300) return '🥈 Expert Trapper'
+    if (points >= 800) return '🏆 Grand Cat Master'
+    if (points >= 500) return '🥇 Whiskers Guardian'
+    if (points >= 300) return '🥈 Expert Trapper'
     return '🥉 Cat Trapper Cadet'
   }
 
-  const sortedProfiles = [...profiles].sort((a, b) => getMockPoints(b) - getMockPoints(a))
+  const sortedProfiles = [...profiles].sort((a, b) => (pointsMap[b.id] || 0) - (pointsMap[a.id] || 0))
 
   if (!isAdmin) return null
 
@@ -85,7 +96,7 @@ export default function Volunteers() {
       ) : (
         <div className="space-y-4">
           {sortedProfiles.map((profile, index) => {
-            const points = getMockPoints(profile)
+            const points = pointsMap[profile.id] || 0
             const title = getTitle(points)
             const assignedTraps = traps.filter(t => t.assigned_to === profile.id)
 

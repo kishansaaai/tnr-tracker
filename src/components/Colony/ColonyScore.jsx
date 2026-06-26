@@ -22,21 +22,24 @@ export function ColonyScore({ cats, colony }) {
   let color = "bg-rose-500"
   let bgLight = "bg-rose-50"
   let textColor = "text-rose-700"
+  let borderColor = "border-rose-200"
   
   if (score >= 80) {
     label = "Thriving 😸"
     color = "bg-emerald-500"
     bgLight = "bg-emerald-50"
     textColor = "text-emerald-700"
+    borderColor = "border-emerald-200"
   } else if (score >= 50) {
     label = "Improving 😺"
     color = "bg-amber-500"
     bgLight = "bg-amber-50"
     textColor = "text-amber-700"
+    borderColor = "border-amber-200"
   }
 
   return (
-    <div className={`rounded-xl border p-4 ${bgLight} border-${color.split('-')[1]}-200 flex items-center justify-between shadow-sm transition-all hover:scale-[1.01]`}>
+    <div className={`rounded-xl border p-4 ${bgLight} ${borderColor} flex items-center justify-between shadow-sm transition-all hover:scale-[1.01]`}>
       <div className="flex-1">
         <h4 className={`text-sm font-bold ${textColor} mb-1 flex items-center gap-2`}>
           <span>💖 Happiness & Health Index</span>

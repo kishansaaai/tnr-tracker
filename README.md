@@ -47,7 +47,13 @@ The command center for field volunteers.
 * **Auto-Bounds Zooming:** The `MapBoundsController` hook calculates the geospatial bounding box of all loaded colonies and automatically fits the camera to it on load.
 * **UI Controls:** Positioned perfectly with `z-[400]` to sit above the Leaflet map panes, featuring translucent blurred toolbars.
 
-### 2.2 The Hierarchical Knowledge Graph (`NetworkGraph.jsx`)
+### 2.2 Route Optimization & Planner (`MapPage.jsx`)
+Helping field volunteers optimize their trap collection runs.
+* **Nearest-Neighbor TSP Algorithm:** Implemented a Traveling Salesperson Problem (TSP) heuristic to dynamically calculate the shortest path connecting all active traps (`in_use` and `needs_pickup`).
+* **Route Visualization:** Renders a dashed purple polyline connecting the traps in order, complete with numbered route marker badges (`idx + 1`) to clearly label checkpoint stops.
+* **Geospatial Distance Estimator:** Computes total route distance in kilometers using the Haversine formula based on spherical trigonometry, displayed on a real-time status banner.
+
+### 2.3 The Hierarchical Knowledge Graph (`NetworkGraph.jsx`)
 The most technically complex piece of the application, designed to handle thousands of nodes without locking up the browser CPU.
 * **Canvas 2D Rendering:** Instead of using standard DOM elements, we used the `nodeCanvasObject` prop to manually draw on the HTML5 Canvas.
   * We draw a background circle, and then use `ctx.fillText` to draw emojis (🐈, 🗺️, 🪤, 👤) perfectly centered based on the node's mathematical `val` size.
@@ -61,7 +67,7 @@ The most technically complex piece of the application, designed to handle thousa
   * Built a top-center absolute auto-complete search. 
   * Fixed a React race-condition where `onBlur` hid the dropdown before `onClick` fired by transitioning the dropdown buttons to use `onMouseDown` with `e.preventDefault()`. Clicking a search result instantly pans the camera, zooms in (`zoom(8)`), and triggers the expansion query.
 
-### 2.3 Post-Op Recovery & The Release Overlay (`RecoveryPage.jsx` & `ReleaseOverlay.jsx`)
+### 2.4 Post-Op Recovery & The Release Overlay (`RecoveryPage.jsx` & `ReleaseOverlay.jsx`)
 Managing cats recovering from surgery and celebrating their return.
 * **Recovery Dashboard:** A grid layout sorting cats by status (e.g., "Recovering", "Cleared for Release"). Uses Tailwind grid tracking.
 * **The `ReleaseOverlay.jsx` Celebration:**
@@ -69,7 +75,19 @@ Managing cats recovering from surgery and celebrating their return.
   * **CSS Implementation:** In `index.css`, we wrote `@keyframes runAcross` which uses `transform: translateX` and `translateY(bounce)` to literally sprint a massive emoji cat across the screen from `-20vw` to `120vw`.
   * **Timing:** The animation runs for exactly 1.5 seconds. The React component uses a `setTimeout` to unmount itself the millisecond the cat leaves the screen, keeping the DOM clean.
 
-### 2.4 The Dashboard & Analytics (`Dashboard.jsx`)
+### 2.5 Adoption Pipeline (`AdoptionPage.jsx`)
+A comprehensive kanban/dashboard layout to manage the socialization and rehoming pipeline.
+* **Pipeline Stages:** Models cat journeys from `TNR (Return)` to `Socializing`, `Ready for Adoption`, and finally `Adopted` with custom cards, badges, and foster details.
+* **Colony Filter:** Quick filter dropdown to focus on cats originating from a specific colony.
+* **Granular Role Controls:** Implements front-and-back security where only organization administrators can move cats to the `Adopted` stage (secured via Supabase Row-Level Security).
+
+### 2.6 Cat Matchmaker Quiz (`MatchmakerPage.jsx`)
+A gamified user-facing matching quiz to pair prospective adopters with ready-to-adopt cats.
+* **Step-by-Step Questionnaire:** Evaluates household energy levels, other pets, and preferred play styles.
+* **Custom Matching Engine:** Accumulates quiz option scores and selects a matching cat from the `adoption_ready` stage pool.
+* **Rich UI Elements:** Staggers step indicators, uses loading animations with randomized cat GIFs during processing, and generates detailed match cards with custom `CatAvatar` fallbacks.
+
+### 2.7 The Dashboard & Analytics (`Dashboard.jsx`)
 Real-time organizational telemetry.
 * **Recharts Integration:** Implemented multiple charts:
   * **TNR Progress Donut Chart:** A customized `PieChart` with an inner radius to show the exact ratio of Neutered vs Intact cats.
@@ -77,13 +95,13 @@ Real-time organizational telemetry.
 * **Micro-Animations:**
   * Built a custom "Paw Print Walking Loader" component. It renders 4 paw prints, staggering their opacity using CSS `animation-delay: 0.2s`, simulating a cat walking across the screen while data fetches.
 
-### 2.5 Gamification: Paws of Honor & Avatars (`Leaderboard.jsx` & `CatAvatar.jsx`)
+### 2.8 Gamification: Paws of Honor & Avatars (`Leaderboard.jsx` & `CatAvatar.jsx`)
 * **Paws of Honor Leaderboard:** Ranks volunteers dynamically based on their `cats.logged_by` count. The top 3 users get special CSS styling (Gold, Silver, Bronze borders).
 * **Cat Avatar Engine (`CatAvatar.jsx`):** 
   * A custom React component that takes a cat's `color` string (e.g., "Orange Tabby", "Tuxedo", "Calico") and generates a unique CSS-based cat face icon.
   * **Logic:** Uses a `useMemo` color mapper to determine base colors and ear colors. It renders SVG elements combined with Tailwind border-radius hacks to make incredibly cute icons without needing external image assets.
 
-### 2.6 The Kitty Cam AI Simulator (`KittyCam.jsx`)
+### 2.9 The Kitty Cam AI Simulator (`KittyCam.jsx`)
 * **UX Design:** Built to simulate a highly advanced biometric AI scan for field volunteers.
 * **Implementation:** 
   * Uses a hidden `<input type="file" accept="image/*">` triggered by an overarching bounding box.
@@ -95,20 +113,27 @@ Real-time organizational telemetry.
 
 ## 🗄️ 3. Database Architecture & Hooks
 
-### Supabase Schema Definition
-The database is fully normalized PostgreSQL:
-1. `profiles`: Standard extension of `auth.users`. Contains `id`, `name`, `role`, `created_at`.
-2. `colonies`: `id`, `name`, `lat`, `lng`, `description`, `status` (Unmanaged, In Progress, Managed), `created_by`.
-3. `cats`: `id`, `name`, `color`, `gender`, `neutered` (boolean), `colony_id` (FKey), `logged_by` (FKey).
-4. `traps`: `id`, `lat`, `lng`, `status` (available, in_use, needs_pickup), `colony_id` (FKey), `assigned_to` (FKey).
-5. `recoveries`: `id`, `cat_id` (FKey), `surgery_date`, `notes`, `cleared_for_release` (boolean).
+### Supabase Schema Definition & RLS Policies
+The database is fully normalized PostgreSQL featuring highly restrictive Row Level Security (RLS) policies:
+1. `profiles`: Extension of `auth.users`. Contains `id`, `name`, `role`, `created_at`.
+   * *RLS Policy:* Users can read only their own profile unless they have the `admin` role.
+   * *Public View:* A read-only view `public_profiles` exposes `id` and `name` to all authenticated users for dropdown assignments.
+2. `colonies`: `id`, `name`, `lat`, `lng` (with constraint check BETWEEN -90/90 and -180/180), `description`, `status` (Unmanaged, In Progress, Managed), `created_by`.
+3. `cats`: `id`, `name`, `color`, `gender`, `neutered` (boolean), `colony_id` (FKey), `logged_by` (FKey), `pipeline_status` (tnr, socializing, adoption_ready, adopted), `adoption_date`, `foster_name`, `health_notes`, `photo_url`.
+   * *RLS Policy:* Only admin users are permitted to update `pipeline_status` to `adopted`.
+4. `traps`: `id`, `lat`, `lng` (with coordinate checks), `status` (available, in_use, needs_pickup), `colony_id` (FKey), `assigned_to` (FKey).
+   * *RLS Policy:* Only the assigned owner or an administrator can modify or delete traps.
+5. `recoveries` & `medications`: Track post-op care.
+   * *RLS Policy:* Updates/Deletes restricted to the recovery record creator or an administrator.
+6. `storage`: Image assets are uploaded to the S3-compatible `cat-photos` bucket.
+   * *Security:* Policies restrict upload inserts to path prefixes matching the volunteer's authenticated UID.
 
 ### Custom React Hooks (`src/hooks/*`)
 We abstracted all Supabase API calls into clean, reusable React Hooks:
-* `useAuth.js`: Listens to `supabase.auth.onAuthStateChange`. Manages the global `user` session state.
+* `useAuth.jsx`: Listens to `supabase.auth.onAuthStateChange`. Manages the global `user` session state and admin permission flags.
 * `useColonies.js`: Fetches all colonies, handles Insert/Update, and provides realtime loading states.
-* `useCats.js`: Features two variants. `useCats(colonyId)` for fetching cats specific to a colony, and `useAllCats()` for global analytics. Includes `uploadCatPhoto` which hooks into Supabase Storage buckets.
-* `useTraps.js`: Manages the lifecycle of traps deployed in the field.
+* `useCats.js`: Features variants like `useCats(colonyId)` for fetching cats specific to a colony, and `useAllCats()` for global analytics and pipeline stages. Includes `uploadCatPhoto` which hooks into Supabase Storage buckets.
+* `useTraps.js`: Manages the lifecycle and location of traps deployed in the field.
 
 ---
 

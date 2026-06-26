@@ -143,7 +143,7 @@ export default function NetworkGraph() {
       setExpandedColonies(prev => new Set(prev).add(colonyNode.rawId))
       
     } catch (e) {
-      console.error(e)
+      toast.error('Failed to load full graph data')
     } finally {
       setIsExpanding(false)
     }
