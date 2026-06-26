@@ -57,7 +57,7 @@ if (!GEMINI_API_KEY) {
   Deno.serve((req) => {
     const origin = req.headers.get('Origin') || ''
     const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
-    const allowedOrigin = isLocal ? origin : 'https://tnr-tracker.vercel.app'
+    const allowedOrigin = (isLocal || origin.endsWith('.vercel.app')) ? origin : 'https://tnr-tracker.vercel.app'
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -74,7 +74,7 @@ if (!GEMINI_API_KEY) {
   Deno.serve(async (req) => {
     const origin = req.headers.get('Origin') || ''
     const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
-    const allowedOrigin = isLocal ? origin : 'https://tnr-tracker.vercel.app'
+    const allowedOrigin = (isLocal || origin.endsWith('.vercel.app')) ? origin : 'https://tnr-tracker.vercel.app'
     
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowedOrigin,
