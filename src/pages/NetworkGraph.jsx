@@ -24,8 +24,10 @@ export default function NetworkGraph() {
     
     // Pin the node in place so physics engine doesn't push it away while expanding!
     if (node.x !== undefined && node.y !== undefined) {
-      node.fx = node.x
-      node.fy = node.y
+      setData(prev => ({
+        ...prev,
+        nodes: prev.nodes.map(n => n.id === node.id ? { ...n, fx: n.x, fy: n.y } : n)
+      }))
     }
     
     if (!node.expanded) {
@@ -73,7 +75,7 @@ export default function NetworkGraph() {
     // Only fetch Colonies and Profiles initially
     const [coloniesRes, profilesRes] = await Promise.all([
       supabase.from('colonies').select('*'),
-      supabase.from('profiles').select('*')
+      supabase.from('profiles').select('id, name')
     ])
 
     const colonies = coloniesRes.data || []
@@ -131,10 +133,11 @@ export default function NetworkGraph() {
           }
         })
 
-        const updatedColonyNode = newNodes.find(n => n.id === colonyNode.id)
-        if (updatedColonyNode) updatedColonyNode.expanded = true
+        const updatedNodes = newNodes.map(n => 
+          n.id === colonyNode.id ? { ...n, expanded: true } : n
+        )
 
-        return computeNeighbors(newNodes, newLinks)
+        return computeNeighbors(updatedNodes, newLinks)
       })
 
       setExpandedColonies(prev => new Set(prev).add(colonyNode.rawId))
@@ -368,20 +371,29 @@ export default function NetworkGraph() {
             // Interaction
             onNodeHover={node => setHoverNode(node || null)}
             onNodeDragEnd={node => {
-              node.fx = node.x
-              node.fy = node.y
+              setData(prev => ({
+                ...prev,
+                nodes: prev.nodes.map(n => n.id === node.id ? { ...n, fx: node.x, fy: node.y } : n)
+              }))
             }}
             onNodeClick={node => {
               setSelectedNode(node)
               
-              // If node is already pinned (from a previous click), unpin it
-              if (node.fx !== undefined && node.fx !== null) {
-                node.fx = null
-                node.fy = null
-              } else {
-                // Pin the node so it stays exactly in the center of the camera
-                node.fx = node.x
-                node.fy = node.y
+              setData(prev => ({
+                ...prev,
+                nodes: prev.nodes.map(n => {
+                  if (n.id === node.id) {
+                    if (n.fx !== undefined && n.fx !== null) {
+                      return { ...n, fx: null, fy: null }
+                    } else {
+                      return { ...n, fx: n.x, fy: n.y }
+                    }
+                  }
+                  return n
+                })
+              }))
+
+              if ((node.fx === undefined || node.fx === null) && fgRef.current) {
                 fgRef.current.centerAt(node.x, node.y, 1000)
                 fgRef.current.zoom(8, 2000)
               }

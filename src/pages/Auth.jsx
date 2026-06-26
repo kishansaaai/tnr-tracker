@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth.jsx'
 import { Button } from '../components/UI/Button'
 import toast from 'react-hot-toast'
 
+import { friendlyError } from '../lib/utils'
+
 export default function Auth() {
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ email: '', password: '', name: '' })
@@ -24,7 +26,7 @@ export default function Auth() {
       }
       navigate('/')
     } catch (err) {
-      toast.error(err.message || 'Something went wrong')
+      toast.error(friendlyError(err))
     } finally {
       setLoading(false)
     }

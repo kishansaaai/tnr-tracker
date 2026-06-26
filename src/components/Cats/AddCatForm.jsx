@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../UI/Button'
+import { getRandomCat } from '../../lib/catApi'
 
 export function AddCatForm({ onAdd, uploading, setUploading }) {
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
   const [loading, setLoading] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState(null)
+  const [breedMatch, setBreedMatch] = useState(null)
 
   function handlePhoto(e) {
     const file = e.target.files[0]
@@ -23,7 +25,8 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
     // Kitty Cam AI Simulator
     setScanning(true)
     setScanResult(null)
-    setTimeout(() => {
+    setBreedMatch(null)
+    setTimeout(async () => {
       setScanning(false)
       const isNeutered = Math.random() > 0.3 // 70% chance to simulate ear-tip found
       if (isNeutered) {
@@ -31,6 +34,11 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
         setScanResult('🐾 Ear-tip detected! Auto-marked as Neutered.')
       } else {
         setScanResult('🔍 No clear ear-tip detected.')
+      }
+
+      const catData = await getRandomCat()
+      if (catData?.breeds?.length > 0) {
+        setBreedMatch(catData)
       }
     }, 2000)
   }
@@ -43,6 +51,8 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
       setForm({ name: '', gender: 'unknown', neutered: false, health_notes: '' })
       setPhotoFile(null)
       setPhotoPreview(null)
+      setScanResult(null)
+      setBreedMatch(null)
     } finally {
       setLoading(false)
     }
@@ -68,7 +78,7 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
           {photoPreview && (
             <button
               type="button"
-              onClick={() => { setPhotoFile(null); setPhotoPreview(null); setScanResult(null) }}
+              onClick={() => { setPhotoFile(null); setPhotoPreview(null); setScanResult(null); setBreedMatch(null) }}
               className="text-xs text-gray-400 hover:text-red-500"
             >
               Remove
@@ -89,9 +99,20 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
                 Scanning ear for TNR tip...
               </p>
             ) : (
-              <p className={scanResult.includes('detected') ? 'text-green-700' : 'text-gray-600'}>
-                {scanResult}
-              </p>
+              <div className="space-y-2">
+                <p className={scanResult?.includes('detected') ? 'text-green-700' : 'text-gray-600'}>
+                  {scanResult}
+                </p>
+                {breedMatch && breedMatch.breeds && breedMatch.breeds[0] && (
+                  <div className="flex gap-3 bg-white p-2 rounded border border-indigo-100 items-center">
+                    <img src={breedMatch.url} alt="Breed Match" className="w-10 h-10 rounded-lg object-cover" />
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">AI Breed Match:</p>
+                      <p className="text-xs text-indigo-600 font-bold">{breedMatch.breeds[0].name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

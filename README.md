@@ -27,6 +27,10 @@ This document serves as the comprehensive technical manual, detailing every sing
 - **Recharts:** For SVG-based dashboard analytics.
 - **React Force Graph 2D (`react-force-graph-2d`):** A wrapper around `d3-force` for the Knowledge Graph.
 
+### Security Notice: API Keys
+- **VITE_GEMINI_API_KEY**: As this is a pure frontend application, Vite environment variables prefixed with `VITE_` are bundled into the client-side JavaScript. To mitigate abuse, you **must** set API key restrictions in the Google Cloud Console and restrict the key to your specific production domain (e.g., `https://your-app.vercel.app`).
+- Alternatively, you can proxy the Gemini calls through a Supabase Edge Function so the key never leaves the server.
+
 ---
 
 ## ✨ 2. Granular UI & Feature Implementations

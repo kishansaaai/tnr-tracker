@@ -7,6 +7,7 @@ import { Badge } from '../components/UI/Badge'
 import { Button } from '../components/UI/Button'
 import { CardSkeleton } from '../components/UI/Skeleton'
 import toast from 'react-hot-toast'
+import { friendlyError } from '../lib/utils'
 
 const PIPELINE_STAGES = [
   { id: 'tnr', label: 'TNR (Return)', icon: '🔄', color: 'bg-gray-50 border-gray-200' },

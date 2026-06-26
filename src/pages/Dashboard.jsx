@@ -9,6 +9,7 @@ import { CardSkeleton } from '../components/UI/Skeleton'
 import { exportColoniesCSV } from '../lib/exportCSV'
 import { openVetSummary } from '../lib/vetExport'
 import toast from 'react-hot-toast'
+import { CatOfTheDay } from '../components/UI/CatOfTheDay'
 
 function StatCard({ value, label, icon, color = 'green' }) {
   const colors = {
@@ -88,25 +89,32 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 shadow-sm">
-        <h2 className="font-semibold text-gray-900 mb-4">Neutering Progress by Colony</h2>
-        {loading || chartData.length === 0 ? (
-          <div className="h-48 flex items-center justify-center text-gray-400">
-            {loading ? 'Loading chart...' : 'No data yet. Add some colonies to get started.'}
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-40} textAnchor="end" interval={0} height={70} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-              <Bar dataKey="neutered" fill="#16a34a" name="Neutered" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="intact" fill="#f59e0b" name="Intact" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col h-full">
+          <h2 className="font-semibold text-gray-900 mb-4">Neutering Progress by Colony</h2>
+          {loading || chartData.length === 0 ? (
+            <div className="flex-1 min-h-[280px] flex items-center justify-center text-gray-400">
+              {loading ? 'Loading chart...' : 'No data yet. Add some colonies to get started.'}
+            </div>
+          ) : (
+            <div className="flex-1 min-h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-40} textAnchor="end" interval={0} height={70} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                  <Bar dataKey="neutered" fill="#16a34a" name="Neutered" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="intact" fill="#f59e0b" name="Intact" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+        <div className="lg:col-span-1 min-h-[350px]">
+          <CatOfTheDay />
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

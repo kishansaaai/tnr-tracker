@@ -25,7 +25,10 @@ export function useUpdates(colonyId) {
           .select('*, profiles(name)')
           .eq('id', payload.new.id)
           .single()
-        if (data) setUpdates(prev => [data, ...prev])
+        if (data) setUpdates(prev => {
+          if (prev.find(u => u.id === data.id)) return prev
+          return [data, ...prev]
+        })
       })
       .subscribe()
 
@@ -45,6 +48,9 @@ export function useUpdates(colonyId) {
   }
 
   async function postUpdate(message, userId) {
+    if (!message?.trim()) throw new Error('Message cannot be empty')
+    if (message.length > 1000) throw new Error('Message must be under 1000 characters')
+
     const { data, error } = await supabase
       .from('updates')
       .insert({ colony_id: colonyId, message, posted_by: userId })

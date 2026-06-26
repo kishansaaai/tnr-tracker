@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/UI/Button'
 import { CatAvatar } from '../components/Cats/CatAvatar'
+import toast from 'react-hot-toast'
+import { getRandomCatGif } from '../lib/catApi'
 
 const questions = [
   {
@@ -39,6 +41,7 @@ export default function MatchmakerPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [loading, setLoading] = useState(false)
+  const [loadingGif, setLoadingGif] = useState(null)
   const [match, setMatch] = useState(null)
 
   const handleAnswer = (questionId, optionScore) => {
@@ -52,6 +55,8 @@ export default function MatchmakerPage() {
 
   const findMatch = async () => {
     setLoading(true)
+    getRandomCatGif().then(gif => setLoadingGif(gif?.url))
+    
     try {
       // Fetch adoption ready cats
       const { data: cats, error } = await supabase
@@ -116,8 +121,14 @@ export default function MatchmakerPage() {
       )}
 
       {loading && (
-        <div className="text-center py-20">
-          <div className="inline-block animate-bounce text-6xl mb-4">🐈</div>
+        <div className="text-center py-20 animate-[fadeIn_0.3s]">
+          <div className="w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-lg border-4 border-rose-100 flex items-center justify-center bg-gray-50">
+            {loadingGif ? (
+              <img src={loadingGif} alt="Loading..." className="w-full h-full object-cover" />
+            ) : (
+              <div className="animate-bounce text-6xl">🐈</div>
+            )}
+          </div>
           <p className="text-xl font-bold text-gray-500 animate-pulse">Calculating the purr-fect match...</p>
         </div>
       )}
@@ -152,7 +163,7 @@ export default function MatchmakerPage() {
           </div>
 
           <div className="flex justify-center gap-4">
-            <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white border-rose-700">
+            <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white border-rose-700" onClick={() => { toast.success('Adoption application submitted!'); setMatch(null); setCurrentStep(0); setAnswers({}); }}>
               Apply to Adopt 📝
             </Button>
             <Button size="lg" variant="secondary" onClick={() => { setMatch(null); setCurrentStep(0); setAnswers({}); }}>

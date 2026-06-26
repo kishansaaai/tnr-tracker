@@ -1,3 +1,12 @@
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export function generateVetSummary(cats, colonies) {
   // Handle both boolean false and string 'false' from database, as well as null/undefined
   const intactCats = cats.filter(c => c.neutered === false || c.neutered === 'false' || !c.neutered)
@@ -7,16 +16,16 @@ export function generateVetSummary(cats, colonies) {
     return `
       <tr>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
-          ${cat.name || '<em style="color:#9ca3af">Unnamed</em>'}
+          ${cat.name ? escapeHtml(cat.name) : '<em style="color:#9ca3af">Unnamed</em>'}
         </td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
           ${cat.gender === 'male' ? '♂ Male' : cat.gender === 'female' ? '♀ Female' : 'Unknown'}
         </td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
-          ${colony?.name || 'Unknown'}
+          ${colony?.name ? escapeHtml(colony.name) : 'Unknown'}
         </td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
-          ${cat.health_notes || '<span style="color:#9ca3af">None</span>'}
+          ${cat.health_notes ? escapeHtml(cat.health_notes) : '<span style="color:#9ca3af">None</span>'}
         </td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">
           <div style="width: 60px; height: 20px; border: 1px solid #d1d5db; border-radius: 4px;"></div>

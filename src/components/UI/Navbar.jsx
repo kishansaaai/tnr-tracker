@@ -14,8 +14,10 @@ export function Navbar() {
     { to: '/recovery', label: 'Recovery', icon: '🏥' },
     { to: '/adoption', label: 'Adoption', icon: '🏠' },
     { to: '/matchmaker', label: 'Matchmaker', icon: '💘' },
-    { to: '/network', label: 'Network', icon: '🕸️' },
-    ...(isAdmin ? [{ to: '/volunteers', label: 'Volunteers', icon: '👥' }] : []),
+    ...(isAdmin ? [
+      { to: '/network', label: 'Network', icon: '🕸️' },
+      { to: '/volunteers', label: 'Volunteers', icon: '👥' }
+    ] : []),
   ]
 
   return (

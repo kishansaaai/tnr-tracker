@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS cats (
   health_notes TEXT DEFAULT '',
   photo_url TEXT DEFAULT '',
   logged_by UUID REFERENCES profiles(id),
+  pipeline_status TEXT DEFAULT 'tnr' CHECK (pipeline_status IN ('tnr', 'socializing', 'adoption_ready', 'adopted')),
+  foster_name TEXT DEFAULT '',
+  adoption_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -55,10 +58,49 @@ CREATE TABLE IF NOT EXISTS updates (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Recoveries table
+CREATE TABLE IF NOT EXISTS recoveries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cat_id UUID NOT NULL REFERENCES cats(id) ON DELETE CASCADE,
+  colony_id UUID NOT NULL REFERENCES colonies(id) ON DELETE CASCADE,
+  surgery_type TEXT NOT NULL DEFAULT 'spay_neuter' CHECK (surgery_type IN ('spay_neuter', 'medical', 'dental', 'other')),
+  surgery_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  release_date TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'recovering' CHECK (status IN ('recovering', 'released', 'complications')),
+  vet_notes TEXT DEFAULT '',
+  created_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Medications table
+CREATE TABLE IF NOT EXISTS medications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recovery_id UUID NOT NULL REFERENCES recoveries(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  dosage TEXT DEFAULT '',
+  frequency TEXT DEFAULT 'daily',
+  start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  end_date TIMESTAMPTZ,
+  next_due TIMESTAMPTZ,
+  completed BOOLEAN NOT NULL DEFAULT false,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Storage bucket for cat photos
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('cat-photos', 'cat-photos', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Adoptions table
+CREATE TABLE IF NOT EXISTS adoptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cat_id UUID REFERENCES cats(id) ON DELETE CASCADE,
+  adopter_name TEXT,
+  adopter_contact TEXT,
+  created_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- ============================================================
 -- RLS POLICIES
@@ -70,6 +112,9 @@ ALTER TABLE colonies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE traps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recoveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE adoptions ENABLE ROW LEVEL SECURITY;
 
 -- PROFILES
 CREATE POLICY "Authenticated users can read all profiles"
@@ -81,7 +126,8 @@ CREATE POLICY "Users can insert their own profile"
 
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE TO authenticated
-  USING (auth.uid() = id);
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id AND role = (SELECT role FROM profiles WHERE id = auth.uid()));
 
 CREATE POLICY "Admins can update any profile"
   ON profiles FOR UPDATE TO authenticated
@@ -99,8 +145,13 @@ CREATE POLICY "Authenticated users can insert colonies"
   ON colonies FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = created_by);
 
-CREATE POLICY "Authenticated users can update colonies"
-  ON colonies FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Volunteers can update their own colonies"
+  ON colonies FOR UPDATE TO authenticated
+  USING (auth.uid() = created_by);
+
+CREATE POLICY "Admins can update any colony"
+  ON colonies FOR UPDATE TO authenticated
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
 
 CREATE POLICY "Only admins can delete colonies"
   ON colonies FOR DELETE TO authenticated
@@ -118,18 +169,29 @@ CREATE POLICY "Authenticated users can insert cats"
   ON cats FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = logged_by);
 
-CREATE POLICY "Authenticated users can update cats"
-  ON cats FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Volunteers can update their own cats"
+  ON cats FOR UPDATE TO authenticated
+  USING (auth.uid() = logged_by);
 
-CREATE POLICY "Authenticated users can delete cats"
-  ON cats FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Admins can update any cat"
+  ON cats FOR UPDATE TO authenticated
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "Volunteers can delete their own cats"
+  ON cats FOR DELETE TO authenticated
+  USING (auth.uid() = logged_by);
+
+CREATE POLICY "Admins can delete any cat"
+  ON cats FOR DELETE TO authenticated
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
 
 -- TRAPS
 CREATE POLICY "Authenticated users can read all traps"
   ON traps FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "Authenticated users can insert traps"
-  ON traps FOR INSERT TO authenticated USING (true);
+  ON traps FOR INSERT TO authenticated
+  WITH CHECK (true);
 
 CREATE POLICY "Authenticated users can update traps"
   ON traps FOR UPDATE TO authenticated USING (true);
@@ -145,8 +207,37 @@ CREATE POLICY "Authenticated users can insert updates"
   ON updates FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = posted_by);
 
-CREATE POLICY "Authenticated users can delete updates"
-  ON updates FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Users can delete their own updates"
+  ON updates FOR DELETE TO authenticated
+  USING (auth.uid() = posted_by);
+
+-- RECOVERIES
+CREATE POLICY "Auth read recoveries" ON recoveries FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Auth insert recoveries" ON recoveries FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Auth update recoveries" ON recoveries FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Auth delete recoveries" ON recoveries FOR DELETE TO authenticated USING (
+    auth.uid() = created_by OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- MEDICATIONS
+CREATE POLICY "Auth read medications" ON medications FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Auth insert medications" ON medications FOR INSERT TO authenticated WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM recoveries
+    WHERE id = recovery_id AND created_by = auth.uid()
+  )
+);
+CREATE POLICY "Auth update medications" ON medications FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Auth delete medications" ON medications FOR DELETE TO authenticated USING (true);
+
+-- ADOPTIONS
+CREATE POLICY "Auth read adoptions" ON adoptions FOR SELECT TO authenticated USING (
+  created_by = auth.uid() OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Auth insert adoptions" ON adoptions FOR INSERT TO authenticated WITH CHECK (
+  created_by = auth.uid() OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
 
 -- Storage policy for cat photos
 CREATE POLICY "Public can view cat photos"
@@ -155,6 +246,10 @@ CREATE POLICY "Public can view cat photos"
 CREATE POLICY "Authenticated users can upload cat photos"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'cat-photos');
+
+CREATE POLICY "Users can delete their own cat photos"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'cat-photos' AND owner = auth.uid());
 
 -- Trigger to auto-create profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()

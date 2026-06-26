@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { CatRewardModal } from './CatRewardModal'
 
 export function ReleaseOverlay({ active, onComplete }) {
   const [items, setItems] = useState([])
+
+  const [showReward, setShowReward] = useState(false)
 
   useEffect(() => {
     if (active) {
@@ -18,13 +21,22 @@ export function ReleaseOverlay({ active, onComplete }) {
 
       const timer = setTimeout(() => {
         setItems([])
-        if (onComplete) onComplete()
+        setShowReward(true)
       }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [active, onComplete])
+  }, [active])
 
-  if (!active) return null
+  if (!active && !showReward) return null
+
+  if (showReward) {
+    return (
+      <CatRewardModal onDismiss={() => {
+        setShowReward(false)
+        if (onComplete) onComplete()
+      }} />
+    )
+  }
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center overflow-hidden transition-all">

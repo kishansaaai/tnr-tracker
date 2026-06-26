@@ -54,35 +54,8 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
-    let loginEmail = email === 'admin' ? 'admin@example.com' : email
-    let loginPassword = email === 'admin' && password === 'admin' ? 'admin_password' : password
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
-      if (error) {
-        // If login failed because user doesn't exist, attempt to auto-signup for the admin user
-        if (email === 'admin' && password === 'admin' && (error.status === 400 || error.message.includes('Invalid login credentials'))) {
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: loginEmail,
-            password: loginPassword,
-            options: {
-              data: { name: 'Admin User' }
-            }
-          })
-          if (signUpError) throw signUpError
-          
-          if (signUpData?.session) {
-            setUser(signUpData.session.user)
-            return
-          } else {
-            throw new Error("Admin account was created, but email confirmation is required. Please check your email or disable 'Confirm email' in Supabase Auth settings.")
-          }
-        }
-        throw error
-      }
-    } catch (err) {
-      throw err
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
   }
 
   async function signUp(email, password, name) {

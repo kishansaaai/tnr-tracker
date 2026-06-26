@@ -27,6 +27,7 @@ export function ActivityFeed({ updates, loading, onPost }) {
           <input
             value={message}
             onChange={e => setMessage(e.target.value)}
+            maxLength={1000}
             placeholder="Post an update (sighting, trap check, etc.)"
             className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />

@@ -49,7 +49,13 @@ export function useCats(colonyId) {
   }
 
   async function uploadCatPhoto(file, catId) {
-    const ext = file.name.split('.').pop()
+    const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    
+    if (file.size > MAX_SIZE) throw new Error('Photo must be under 5MB')
+    if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Only JPEG, PNG, WebP, or GIF allowed')
+    
+    const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }[file.type]
     const path = `${catId}-${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('cat-photos')

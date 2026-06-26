@@ -163,8 +163,8 @@ export default function MapPage() {
     <div className="relative flex flex-col" style={{ height: 'calc(100vh - 56px)' }}>
       <div className={`flex-1 ${pinMode ? 'cursor-crosshair' : ''}`}>
         <MapContainer
-          center={[12.9716, 77.5946]}
-          zoom={12}
+          center={[20, 0]}
+          zoom={2}
           style={{ height: '100%', width: '100%' }}
           zoomControl={true}
         >
@@ -284,24 +284,29 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Map Tools - Top Right */}
-      <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-        <Button
+      {/* Map Tools - Top Center */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-gray-100">
+        <button
           onClick={() => setShowHeatmap(!showHeatmap)}
-          variant={showHeatmap ? 'amber' : 'secondary'}
-          size="sm"
-          className="shadow-lg bg-white/90 backdrop-blur-sm font-bold"
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+            showHeatmap 
+              ? 'bg-orange-100 text-orange-800 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`}
         >
-          {showHeatmap ? 'Hide Heatmap' : '🔥 Priority Heatmap'}
-        </Button>
-        <Button
+          🔥 Priority Heatmap
+        </button>
+        <div className="w-px h-5 bg-gray-200 mx-1"></div>
+        <button
           onClick={() => setShowRoute(!showRoute)}
-          variant={showRoute ? 'amber' : 'secondary'}
-          size="sm"
-          className="shadow-lg bg-white/90 backdrop-blur-sm font-bold"
+          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+            showRoute 
+              ? 'bg-blue-100 text-blue-800 shadow-sm' 
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`}
         >
-          {showRoute ? 'Hide Route' : '🗺️ Route Planner'}
-        </Button>
+          🗺️ Route Planner
+        </button>
       </div>
 
       {/* Action Buttons - Bottom Left */}

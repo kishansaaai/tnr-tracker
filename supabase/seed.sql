@@ -1,9 +1,18 @@
+-- ⚠️ DEVELOPMENT ONLY — NEVER RUN IN PRODUCTION
+-- This will permanently delete ALL data.
+DO $$ BEGIN
+  IF current_database() NOT LIKE '%dev%' AND current_database() NOT LIKE '%local%' THEN
+    RAISE EXCEPTION 'seed.sql must not be run in production';
+  END IF;
+END $$;
 
 -- Clear existing data
 TRUNCATE TABLE medications, recoveries, updates, traps, cats, colonies CASCADE;
 
 -- Default User Profile
-INSERT INTO auth.users (id, email) VALUES ('00000000-0000-0000-0000-000000000000', 'demo@example.com') ON CONFLICT DO NOTHING;
+-- NOTE: Direct writes to auth.users bypass auth validation. 
+-- You should use supabase.auth.admin.createUser() API to seed users.
+-- Assuming '00000000-0000-0000-0000-000000000000' has been created via API:
 INSERT INTO profiles (id, name, role) VALUES ('00000000-0000-0000-0000-000000000000', 'Demo User', 'admin') ON CONFLICT DO NOTHING;
 
 -- Colonies

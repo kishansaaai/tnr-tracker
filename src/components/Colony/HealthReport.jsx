@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../UI/Button'
 import { analyseColonyHealth, parseHealthReport } from '../../lib/gemini'
+import { friendlyError } from '../../lib/utils'
 
 function renderBoldText(text) {
   if (!text) return ''
@@ -90,7 +91,7 @@ export function HealthReport({ colony, cats, updates }) {
       const raw = await analyseColonyHealth({ colony, cats, updates })
       setReport(parseHealthReport(raw))
     } catch (e) {
-      setError(e.message)
+      setError(friendlyError(e))
     } finally {
       setLoading(false)
     }

@@ -9,10 +9,11 @@ export function RecoveryCard({ recovery, onRelease, onAddMed, onMarkMed, onDelet
   const [medForm, setMedForm] = useState({ name: '', dosage: '', frequency: 'daily' })
 
   useEffect(() => {
+    let cancelled = false
     const interval = setInterval(() => {
-      setTimeLeft(getRecoveryUrgency(recovery.release_date))
+      if (!cancelled) setTimeLeft(getRecoveryUrgency(recovery.release_date))
     }, 60000)
-    return () => clearInterval(interval)
+    return () => { cancelled = true; clearInterval(interval) }
   }, [recovery.release_date])
 
   const urgencyColors = {

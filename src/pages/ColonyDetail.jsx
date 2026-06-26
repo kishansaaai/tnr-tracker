@@ -18,6 +18,7 @@ import { TNROverlay } from '../components/Colony/TNROverlay'
 import { CardSkeleton, CatSkeleton } from '../components/UI/Skeleton'
 import { openVetSummary } from '../lib/vetExport'
 import toast from 'react-hot-toast'
+import { friendlyError } from '../lib/utils'
 
 export default function ColonyDetail() {
   const { id } = useParams()
@@ -63,7 +64,7 @@ export default function ColonyDetail() {
       }
       setShowAddCat(false)
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
       throw e
     }
   }
@@ -73,7 +74,7 @@ export default function ColonyDetail() {
       await deleteCat(catId)
       toast.success('Cat removed')
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
     }
   }
 
@@ -84,7 +85,7 @@ export default function ColonyDetail() {
       toast.success('Colony updated')
       setEditing(false)
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
     }
   }
 
@@ -95,7 +96,7 @@ export default function ColonyDetail() {
       toast.success('Colony deleted')
       navigate('/')
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
     }
   }
 
@@ -331,7 +332,7 @@ export default function ColonyDetail() {
                   await updateTrap(trapId, updates)
                   toast.success('Trap status updated')
                 } catch (e) {
-                  toast.error(e.message)
+                  toast.error(friendlyError(e))
                 }
               }}
               onDelete={async (trapId) => {
@@ -339,7 +340,7 @@ export default function ColonyDetail() {
                   await deleteTrap(trapId)
                   toast.success('Trap removed')
                 } catch (e) {
-                  toast.error(e.message)
+                  toast.error(friendlyError(e))
                 }
               }}
               isAdmin={isAdmin}

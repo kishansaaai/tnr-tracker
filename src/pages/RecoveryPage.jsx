@@ -9,6 +9,7 @@ import { ReleaseOverlay } from '../components/Recovery/ReleaseOverlay'
 import { Button } from '../components/UI/Button'
 import { CardSkeleton } from '../components/UI/Skeleton'
 import toast from 'react-hot-toast'
+import { friendlyError } from '../lib/utils'
 
 export default function RecoveryPage() {
   const { recoveries, activeRecoveries, loading, createRecovery, updateRecovery, deleteRecovery, addMedication, updateMedication } = useRecoveries()
