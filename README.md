@@ -73,9 +73,10 @@ To run TNR Tracker locally, follow these steps:
 - **Recharts:** For SVG-based dashboard analytics.
 - **React Force Graph 2D (`react-force-graph-2d`):** A wrapper around `d3-force` for the Knowledge Graph.
 
-### Security Notice: API Keys
-- **VITE_GEMINI_API_KEY**: As this is a pure frontend application, Vite environment variables prefixed with `VITE_` are bundled into the client-side JavaScript. To mitigate abuse, you **must** set API key restrictions in the Google Cloud Console and restrict the key to your specific production domain (e.g., `https://your-app.vercel.app`).
-- Alternatively, you can proxy the Gemini calls through a Supabase Edge Function so the key never leaves the server.
+### Security Notice: Edge Functions & API Keys
+- **100% Server-Side Execution**: All Gemini AI and external API calls are routed through Supabase Edge Functions (`gemini-proxy` and `cat-api-proxy`). No sensitive keys are bundled into the Vite client-side JavaScript.
+- **JWT Authentication & Rate Limiting**: The Edge Functions strictly require a valid Supabase Auth JWT in the `Authorization` header. They also implement an in-memory sliding window rate limiter (e.g., 60-second cooldown per user) to protect API quotas.
+- **Strict CORS Policies**: The Edge Functions enforce strict Cross-Origin Resource Sharing, accepting requests exclusively from the designated frontend domain.
 
 ---
 

@@ -12,13 +12,13 @@ This roadmap outlines the extremely granular, minute-by-minute technical evoluti
   - Implement granular policies on `traps`, `recoveries`, and `medications` tables restricting `UPDATE` and `DELETE` to only the assigned user/creator or org-admins.
   - Secure `cats` and `traps` tables ensuring volunteers can only view data within a 50km radius of their location to prevent data-scraping of vulnerable colonies.
   - Implement Supabase Vault for encrypting sensitive volunteer PII (Personally Identifiable Information).
-- [ ] **Frontend Performance Optimization**
-  - Implement Code Splitting using `React.lazy()` and Suspense for `NetworkGraph.jsx` and `MapPage.jsx` to reduce initial bundle size by 40%.
+- [x] **Frontend Performance Optimization**
+  - ~~Implement Code Splitting using `React.lazy()` and Suspense for `NetworkGraph.jsx` and `MapPage.jsx` to reduce initial bundle size by 40%.~~ (Completed)
   - Configure Vite PWA plugin to generate service workers for offline caching of static assets.
   - Migrate Leaflet tile servers from OpenStreetMap to a custom Mapbox instance for higher rate limits and custom dark mode themes.
-- [ ] **Database Indexing Strategy**
+- [x] **Database Indexing Strategy**
   - Add GiST (Generalized Search Tree) indexing to `colonies.lat` and `colonies.lng` for lightning-fast geospatial queries using PostGIS.
-  - Add B-Tree indexing to `cats.colony_id` and `traps.colony_id` to speed up the Knowledge Graph hierarchical queries.
+  - ~~Add B-Tree indexing to `cats.colony_id` and `traps.colony_id` to speed up the Knowledge Graph hierarchical queries.~~ (Completed)
   - Implement a Postgres materialized view for the "Priority Heatmap" calculation to offload the `intactCount` math from the client to the server.
 
 ### Sprint 2: Core UX/UI Refinements
