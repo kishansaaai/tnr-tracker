@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAllCats } from '../hooks/useCats'
 import { useColonies } from '../hooks/useColonies'
 import { Badge } from '../components/UI/Badge'
+import { friendlyError } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 const PIPELINE_STAGES = [
@@ -98,7 +99,7 @@ export default function AdoptionPage() {
       await updateCat(catId, updates)
       toast.success(`Cat moved to ${PIPELINE_STAGES.find(s => s.id === newStatus)?.label}`)
     } catch (err) {
-      toast.error(err.message)
+      toast.error(friendlyError(err))
     }
   }
 
@@ -144,7 +145,7 @@ export default function AdoptionPage() {
 
       {error && (
         <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 mb-6 text-sm">
-          Failed to load adoption data: {error.message || 'Unknown error'}
+          Failed to load adoption data. Please try again.
         </div>
       )}
 

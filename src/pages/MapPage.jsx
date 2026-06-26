@@ -9,7 +9,7 @@ import { createColonyIcon, createTrapIcon } from '../components/Map/markers'
 import { ColonySidebar } from '../components/Map/ColonySidebar'
 import { AddColonyModal, AddTrapModal } from '../components/Map/AddPinModals'
 import { Button } from '../components/UI/Button'
-import { haversineDistance, computeRoute } from '../lib/utils'
+import { haversineDistance, computeRoute, friendlyError } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 import L from 'leaflet'
@@ -84,7 +84,7 @@ export default function MapPage() {
       await createColony({ ...data, created_by: user.id })
       toast.success(`Colony "${data.name}" added`)
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
       throw e
     }
   }
@@ -94,7 +94,7 @@ export default function MapPage() {
       await createTrap(data)
       toast.success('Trap placed')
     } catch (e) {
-      toast.error(e.message)
+      toast.error(friendlyError(e))
       throw e
     }
   }
