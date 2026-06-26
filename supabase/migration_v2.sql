@@ -88,12 +88,22 @@ ALTER TABLE traps ADD CONSTRAINT traps_lng_range CHECK (lng BETWEEN -180 AND 180
 CREATE OR REPLACE VIEW public_profiles AS SELECT id, name FROM profiles;
 GRANT SELECT ON public_profiles TO authenticated;
 
+-- Security Definer helper to check admin role bypassing RLS recursion
+CREATE OR REPLACE FUNCTION public.check_user_is_admin(user_id UUID)
+RETURNS BOOLEAN SECURITY DEFINER AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = user_id AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql;
+
 DROP POLICY IF EXISTS "Authenticated users can read all profiles" ON profiles;
 CREATE POLICY "Users can read own profile, admins read all"
   ON profiles FOR SELECT TO authenticated
   USING (
     auth.uid() = id OR
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    public.check_user_is_admin(auth.uid())
   );
   
 ALTER TABLE updates DROP CONSTRAINT IF EXISTS updates_message_check;

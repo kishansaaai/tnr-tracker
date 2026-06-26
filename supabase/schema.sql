@@ -124,11 +124,29 @@ ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
 CREATE VIEW public_profiles AS SELECT id, name FROM profiles;
 GRANT SELECT ON public_profiles TO authenticated;
 
+-- Security Definer helper to check admin role bypassing RLS recursion
+CREATE OR REPLACE FUNCTION public.check_user_is_admin(user_id UUID)
+RETURNS BOOLEAN SECURITY DEFINER AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = user_id AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Security Definer helper to get user role bypassing RLS recursion
+CREATE OR REPLACE FUNCTION public.get_user_role(user_id UUID)
+RETURNS TEXT SECURITY DEFINER AS $$
+BEGIN
+  RETURN (SELECT role FROM public.profiles WHERE id = user_id);
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE POLICY "Users can read own profile, admins read all"
   ON profiles FOR SELECT TO authenticated
   USING (
     auth.uid() = id OR
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+    public.check_user_is_admin(auth.uid())
   );
 
 CREATE POLICY "Users can insert their own profile"
@@ -138,7 +156,7 @@ CREATE POLICY "Users can insert their own profile"
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE TO authenticated
   USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id AND role = (SELECT role FROM profiles WHERE id = auth.uid()));
+  WITH CHECK (auth.uid() = id AND role = public.get_user_role(auth.uid()));
 
 CREATE POLICY "Admins can update any profile"
   ON profiles FOR UPDATE TO authenticated
