@@ -36,25 +36,10 @@ const questions = [
   }
 ]
 
+import { hasKeywordWithoutNegation } from '../lib/utils'
+
 const energyLabels = { 1: 'low-energy', 2: 'medium-energy', 3: 'high-energy' }
 const activityLabels = { 1: 'a cuddler', 2: 'a playful companion', 3: 'an independent spirit' }
-
-function hasKeywordWithoutNegation(text, keyword) {
-  let searchFrom = 0
-  while (true) {
-    const idx = text.indexOf(keyword, searchFrom)
-    if (idx === -1) return false
-    
-    const precedingText = text.slice(Math.max(0, idx - 20), idx).trim()
-    const words = precedingText.split(/\s+/)
-    const denylist = ['not', 'no', 'never', "isn't", "aren't", "doesn't", "won't", 'hardly', 'barely', "wasn't", 'formerly', 'previously', 'used to be']
-    const lastWords = words.slice(-2)
-    const isNegated = lastWords.some(w => denylist.includes(w.toLowerCase().replace(/[^a-z']/g, '')))
-    
-    if (!isNegated) return true // Found a non-negated instance
-    searchFrom = idx + keyword.length
-  }
-}
 
 export default function MatchmakerPage() {
   const navigate = useNavigate()

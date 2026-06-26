@@ -21,6 +21,9 @@ export default defineConfig({
             if (id.includes('d3')) {
               return 'vendor-d3'
             }
+            if (id.includes('recharts') || id.includes('victory') || id.includes('react-resize-detector')) {
+              return 'vendor-recharts'
+            }
             return 'vendor-others'
           }
         }

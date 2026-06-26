@@ -55,7 +55,11 @@ export function NotificationDropdown({ notifications, unreadCount, enabled, onTo
                 {enabled ? '🔔 On' : '🔕 Off'}
               </button>
               {notifications.length > 0 && (
-                <button onClick={onClearAll} className="text-xs text-gray-400 hover:text-gray-600">
+                <button 
+                  onClick={onClearAll} 
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                  aria-label="Clear all notifications"
+                >
                   Clear all
                 </button>
               )}

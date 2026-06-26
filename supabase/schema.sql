@@ -346,3 +346,67 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================
+-- Rate Limiting Schema & Helper Functions
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS api_rate_limits (
+  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  last_call TIMESTAMPTZ NOT NULL,
+  call_count INT NOT NULL DEFAULT 1
+);
+
+ALTER TABLE api_rate_limits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users read own rate limit" ON api_rate_limits FOR SELECT TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Service role manages rate limits" ON api_rate_limits FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- Atomic rate-limiting function to prevent concurrent race conditions
+CREATE OR REPLACE FUNCTION public.check_and_increment_rate_limit(
+  p_user_id UUID,
+  p_limit_seconds INT,
+  p_max_calls INT
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_last_call TIMESTAMPTZ;
+  v_call_count INT;
+  v_now TIMESTAMPTZ := NOW();
+BEGIN
+  -- Lock the user's rate limit row to block concurrent calls
+  SELECT last_call, call_count 
+  INTO v_last_call, v_call_count
+  FROM public.api_rate_limits
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+
+  IF FOUND THEN
+    -- Check if cooldown period is still active
+    IF v_now - v_last_call < (p_limit_seconds * INTERVAL '1 second') THEN
+      RETURN FALSE;
+    ELSE
+      -- Cooldown passed; increment calls and set timestamp
+      UPDATE public.api_rate_limits
+      SET last_call = v_now,
+          call_count = v_call_count + 1
+      WHERE user_id = p_user_id;
+      RETURN TRUE;
+    END IF;
+  ELSE
+    -- Initial insert
+    INSERT INTO public.api_rate_limits (user_id, last_call, call_count)
+    VALUES (p_user_id, v_now, 1)
+    ON CONFLICT (user_id) DO UPDATE 
+    SET last_call = EXCLUDED.last_call,
+        call_count = public.api_rate_limits.call_count + 1;
+    RETURN TRUE;
+  END IF;
+END;
+$$;

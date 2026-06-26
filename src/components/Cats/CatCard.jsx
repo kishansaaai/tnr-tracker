@@ -3,6 +3,15 @@ import { Badge } from '../UI/Badge'
 import { Button } from '../UI/Button'
 import { CatAvatar } from './CatAvatar'
 
+/**
+ * Component representing an individual cat card within a colony roster.
+ * Renders avatar, gender, spay/neuter status, health notes, and deletes if permitted.
+ * 
+ * @param {object} props - Component properties.
+ * @param {object} props.cat - The cat object containing ID, name, gender, spayed/neutered status, etc.
+ * @param {function} props.onDelete - Callback when cat is requested to be removed.
+ * @param {boolean} props.isAdmin - Boolean flag representing admin capabilities.
+ */
 export function CatCard({ cat, onDelete, isAdmin }) {
   const [showDelete, setShowDelete] = useState(false)
 

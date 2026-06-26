@@ -3,6 +3,17 @@ import { getRecoveryUrgency } from '../../hooks/useRecovery'
 import { Badge } from '../UI/Badge'
 import { Button } from '../UI/Button'
 
+/**
+ * Component representing a card in the post-operative recovery ward dashboard.
+ * Displays spay/neuter hold timelines, urgent recovery conditions, and allows logging medications.
+ * 
+ * @param {object} props - Component properties.
+ * @param {object} props.recovery - The recovery record including the cat details and medications.
+ * @param {function} props.onRelease - Callback function to release the cat back to its colony.
+ * @param {function} props.onAddMed - Callback to register a new medication for the cat.
+ * @param {function} props.onMarkMed - Callback to toggle a medication administration status.
+ * @param {function} props.onDelete - Callback to delete the recovery record.
+ */
 export function RecoveryCard({ recovery, onRelease, onAddMed, onMarkMed, onDelete }) {
   const [timeLeft, setTimeLeft] = useState(getRecoveryUrgency(recovery.release_date))
   const [showMedForm, setShowMedForm] = useState(false)
@@ -177,7 +188,12 @@ export function RecoveryCard({ recovery, onRelease, onAddMed, onMarkMed, onDelet
         {/* Actions */}
         {!isReleased && (
           <div className="flex gap-2 pt-2 border-t border-gray-100">
-            <Button size="xs" className="flex-1" onClick={() => onRelease(recovery.id)}>
+            <Button 
+              size="xs" 
+              className="flex-1" 
+              onClick={() => onRelease(recovery.id)}
+              aria-label="Release recovered cat back to colony"
+            >
               ✅ Release Cat
             </Button>
             <Button size="xs" variant="danger" onClick={() => onDelete(recovery.id)} aria-label="Delete recovery record">

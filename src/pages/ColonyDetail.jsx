@@ -18,6 +18,7 @@ import { TNROverlay } from '../components/Colony/TNROverlay'
 import { CardSkeleton, CatSkeleton } from '../components/UI/Skeleton'
 import { openVetSummary } from '../lib/vetExport'
 import { Modal } from '../components/UI/Modal'
+import { FeedingManager } from '../components/Colony/FeedingManager'
 import toast from 'react-hot-toast'
 import { friendlyError } from '../lib/utils'
 
@@ -135,6 +136,7 @@ export default function ColonyDetail() {
   const tabs = [
     { id: 'cats', label: `Cats (${cats.length})`, short: 'Cats' },
     { id: 'traps', label: `Traps (${traps.length})`, short: 'Traps' },
+    { id: 'feedings', label: 'Feeding Log', short: 'Feeding' },
     { id: 'activity', label: 'Activity', short: 'Feed' },
     { id: 'health', label: 'AI Report', short: 'AI' },
   ]
@@ -360,6 +362,20 @@ export default function ColonyDetail() {
                 }
               }}
               isAdmin={isAdmin}
+            />
+          </div>
+        )}
+
+        {activeTab === 'feedings' && (
+          <div>
+            <h2 className="font-semibold text-gray-900 mb-4">Caregivers & Feeding Log</h2>
+            <FeedingManager
+              colonyId={id}
+              updates={updates}
+              onPostFeed={async (msg) => {
+                setIsFeeding(true)
+                await postUpdate(msg, user?.id)
+              }}
             />
           </div>
         )}

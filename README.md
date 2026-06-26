@@ -85,7 +85,7 @@ To reset your local database stack or revert migrations:
 
 ### Frontend
 - **React 18 & Vite:** The core framework, ensuring lightning-fast Hot Module Replacement (HMR) and optimized production builds.
-- **Tailwind CSS v3:** The utility-first CSS framework. We eschewed basic styling for deep customizations, including complex `tailwind.config.js` extensions for custom drop-shadows and micro-animations.
+- **Tailwind CSS v4:** The utility-first CSS framework. It uses the new `@tailwindcss/vite` plugin and CSS-based configurations in `index.css` for custom animations, drop-shadows, and transitions, avoiding the need for a legacy JavaScript config file.
 - **Vanilla CSS (`index.css`):** Used for advanced `@keyframes` that Tailwind couldn't natively support, specifically for the massive full-screen release animations and glassmorphism utilities.
 - **React Router v6:** Handles SPA routing, nested routes, and protected authenticated layouts.
 

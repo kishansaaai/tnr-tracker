@@ -97,6 +97,9 @@ export default function NetworkGraph() {
   const [isExpanding, setIsExpanding] = useState(false)
 
   const computeNeighbors = useCallback((nodes, links) => {
+    // Build a lookup Map to optimize search to O(1) complexity instead of O(n²) find() scans
+    const nodeMap = new Map(nodes.map(n => [n.id, n]))
+
     nodes.forEach(node => {
       node.neighbors = []
       node.links = []
@@ -105,8 +108,8 @@ export default function NetworkGraph() {
       const aId = typeof link.source === 'object' ? link.source.id : link.source
       const bId = typeof link.target === 'object' ? link.target.id : link.target
       
-      const a = nodes.find(n => n.id === aId)
-      const b = nodes.find(n => n.id === bId)
+      const a = nodeMap.get(aId)
+      const b = nodeMap.get(bId)
       
       if (a && b) {
         a.neighbors.push(b)
@@ -483,7 +486,12 @@ export default function NetworkGraph() {
         )}
       </div>
 
-      <div ref={containerRef} className="flex-1 w-full h-full cursor-move">
+      <div 
+        ref={containerRef} 
+        tabIndex="0"
+        aria-label="Interactive network graph canvas. Use search bar to locate colonies."
+        className="flex-1 w-full h-full cursor-move focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-2xl"
+      >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-xl font-bold text-emerald-500 animate-pulse font-mono">INITIALIZING HIERARCHICAL GRAPH... 🕸️</div>

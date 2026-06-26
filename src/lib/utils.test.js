@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { haversineDistance, friendlyError, sanitizeForPrompt, computeRoute } from './utils'
+import { haversineDistance, friendlyError, sanitizeForPrompt, computeRoute, hasKeywordWithoutNegation } from './utils'
 import { escapeHtml } from './vetExport'
 import { getRecoveryUrgency } from '../hooks/useRecovery'
 
@@ -133,5 +133,27 @@ describe('Matchmaker compatibility score calculations', () => {
     expect(calculateScore(4)).toBe(3)
     expect(calculateScore(5)).toBe(2)
     expect(calculateScore(6)).toBe(0) // Worst match
+  })
+})
+
+describe('hasKeywordWithoutNegation', () => {
+  it('returns true if keyword matches without negations', () => {
+    expect(hasKeywordWithoutNegation('This cat is playful and friendly.', 'playful')).toBe(true)
+  })
+
+  it('returns false if keyword matches but is negated locally', () => {
+    expect(hasKeywordWithoutNegation('This cat is not playful.', 'playful')).toBe(false)
+    expect(hasKeywordWithoutNegation('This cat is no longer playful.', 'playful')).toBe(false)
+    expect(hasKeywordWithoutNegation('This cat is not at all playful.', 'playful')).toBe(false)
+  })
+
+  it('handles clause boundary limits properly', () => {
+    expect(hasKeywordWithoutNegation('This cat is not friendly, but is playful.', 'playful')).toBe(true)
+    expect(hasKeywordWithoutNegation('This cat is not friendly. Also he is playful.', 'playful')).toBe(true)
+  })
+
+  it('is case insensitive', () => {
+    expect(hasKeywordWithoutNegation('This cat is PLAYFUL.', 'playful')).toBe(true)
+    expect(hasKeywordWithoutNegation('This cat is Playful.', 'PLAYFUL')).toBe(true)
   })
 })

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useColonies } from '../hooks/useColonies'
@@ -32,10 +32,18 @@ function StatCard({ value, label, icon, color = 'green' }) {
   )
 }
 
+/**
+ * Main Dashboard page component.
+ * Renders high-level metrics, spay/neuter progress charts, municipal quarterly reporting,
+ * and a listing of all active colonies in a clean tabular view.
+ */
 export default function Dashboard() {
   const { colonies, loading: coloniesLoading } = useColonies()
   const { cats, loading: catsLoading } = useAllCats()
   const { traps } = useTraps()
+
+  const [reportYear, setReportYear] = useState(new Date().getFullYear())
+  const [reportQuarter, setReportQuarter] = useState(Math.floor((new Date().getMonth() + 3) / 3))
 
   useEffect(() => {
     document.title = 'TNR Tracker — Dashboard'
@@ -46,6 +54,38 @@ export default function Dashboard() {
   const totalNeutered = cats.filter(cat => cat.neutered).length
   const neuteredPct = totalCats > 0 ? Math.round((totalNeutered / totalCats) * 100) : 0
   const activeTraps = traps.filter(trap => trap.status === 'in_use').length
+
+  const quarterlyReport = useMemo(() => {
+    if (cats.length === 0) return { totalLogged: 0, totalTnr: 0, successRate: 0, funding: 0 }
+    
+    const qMonths = {
+      1: { start: 0, end: 2 },
+      2: { start: 3, end: 5 },
+      3: { start: 6, end: 8 },
+      4: { start: 9, end: 11 }
+    }
+    const { start, end } = qMonths[reportQuarter]
+    const startOfQuarter = new Date(reportYear, start, 1)
+    const endOfQuarter = new Date(reportYear, end + 1, 0, 23, 59, 59, 999)
+
+    const catsLoggedInQuarter = cats.filter(cat => {
+      const d = new Date(cat.created_at)
+      return d >= startOfQuarter && d <= endOfQuarter
+    })
+
+    const tnrdInQuarter = catsLoggedInQuarter.filter(cat => cat.neutered).length
+    const successRate = catsLoggedInQuarter.length > 0 
+      ? Math.round((tnrdInQuarter / catsLoggedInQuarter.length) * 100) 
+      : 0
+    const funding = tnrdInQuarter * 75 // $75 standard grant subsidy per spay/neuter
+
+    return {
+      totalLogged: catsLoggedInQuarter.length,
+      totalTnr: tnrdInQuarter,
+      successRate,
+      funding
+    }
+  }, [cats, reportYear, reportQuarter])
 
   const chartData = colonies.map(colony => {
     const colonyCats = cats.filter(cat => cat.colony_id === colony.id)
@@ -97,9 +137,17 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col h-full">
           <h2 className="font-semibold text-gray-900 mb-4">Neutering Progress by Colony</h2>
-          {loading || chartData.length === 0 ? (
+          {loading ? (
+            <div className="flex-1 min-h-[280px] flex items-end gap-3 pb-8 px-4 animate-pulse">
+              <div className="bg-gray-100 rounded-t-lg w-full h-[60%]" />
+              <div className="bg-gray-200 rounded-t-lg w-full h-[80%]" />
+              <div className="bg-gray-100 rounded-t-lg w-full h-[40%]" />
+              <div className="bg-gray-200 rounded-t-lg w-full h-[90%]" />
+              <div className="bg-gray-100 rounded-t-lg w-full h-[55%]" />
+            </div>
+          ) : chartData.length === 0 ? (
             <div className="flex-1 min-h-[280px] flex items-center justify-center text-gray-400">
-              {loading ? 'Loading chart...' : 'No data yet. Add some colonies to get started.'}
+              No data yet. Add some colonies to get started.
             </div>
           ) : (
             <div className="flex-1 min-h-[280px]">
@@ -120,6 +168,74 @@ export default function Dashboard() {
         <div className="lg:col-span-1 min-h-[350px]">
           <CatOfTheDay />
         </div>
+      </div>
+
+      {/* Municipal Grant & Quarterly TNR Report Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 pb-4 mb-4 gap-4">
+          <div>
+            <h2 className="font-bold text-gray-900 flex items-center gap-2">
+              <span>📋</span> Municipal Grant & Quarterly TNR Report
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">Generate municipal reporting metrics for Trap-Neuter-Return funding</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={reportYear}
+              onChange={e => setReportYear(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+            </select>
+            <select
+              value={reportQuarter}
+              onChange={e => setReportQuarter(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="1">Q1 (Jan - Mar)</option>
+              <option value="2">Q2 (Apr - Jun)</option>
+              <option value="3">Q3 (Jul - Sep)</option>
+              <option value="4">Q4 (Oct - Dec)</option>
+            </select>
+            <Button
+              size="xs"
+              variant="secondary"
+              onClick={() => {
+                const reportText = `TNR Tracker - Quarterly Grant Report\nPeriod: Q${reportQuarter} ${reportYear}\n----------------------------------\nTotal Cats Logged: ${quarterlyReport.totalLogged}\nTotal TNR Operations Completed: ${quarterlyReport.totalTnr}\nNeutering/TNR Success Rate: ${quarterlyReport.successRate}%\nEstimated Grant Subsidy ($75/cat): $${quarterlyReport.funding}\n----------------------------------\nGenerated on: ${new Date().toLocaleDateString()}`
+                navigator.clipboard.writeText(reportText)
+                toast.success('Report copied to clipboard!')
+              }}
+            >
+              Copy Report
+            </Button>
+          </div>
+        </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-pulse">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 text-center">
+              <div className="text-xl font-bold text-gray-900">{quarterlyReport.totalLogged}</div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">Cats Logged</div>
+            </div>
+            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 text-center">
+              <div className="text-xl font-bold text-emerald-800">{quarterlyReport.totalTnr}</div>
+              <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">TNR Operations</div>
+            </div>
+            <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 text-center">
+              <div className="text-xl font-bold text-amber-800">{quarterlyReport.successRate}%</div>
+              <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mt-0.5">Success Rate</div>
+            </div>
+            <div className="bg-green-50/50 p-4 rounded-xl border border-green-100 text-center">
+              <div className="text-xl font-bold text-green-800">${quarterlyReport.funding}</div>
+              <div className="text-[10px] font-bold text-green-600 uppercase tracking-wider mt-0.5">Est. Funding</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

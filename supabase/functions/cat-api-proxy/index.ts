@@ -21,6 +21,28 @@ if (!CAT_API_KEY) {
       { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
   })
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+)
+
+if (!CAT_API_KEY) {
+  Deno.serve((req) => {
+    const origin = req.headers.get('Origin') || ''
+    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
+    const allowedOrigin = isLocal ? origin : 'https://tnr-tracker.vercel.app'
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': allowedOrigin,
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    }
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders })
+    }
+    return new Response(
+      JSON.stringify({ error: 'Server misconfiguration: CAT_API_KEY not set' }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    )
+  })
 } else {
   Deno.serve(async (req) => {
     const origin = req.headers.get('Origin') || ''
@@ -48,11 +70,6 @@ if (!CAT_API_KEY) {
         { global: { headers: { Authorization: authHeader } } }
       )
 
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
       const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
       if (authError || !user) {
         return new Response('Unauthorized', { status: 401, headers: corsHeaders })
@@ -68,22 +85,17 @@ if (!CAT_API_KEY) {
         })
       }
 
-      // Database-backed Rate Limiting (5 seconds per user for Cat API)
-      const { data: rateLimit } = await supabaseAdmin
-        .from('api_rate_limits')
-        .select('last_call, call_count')
-        .eq('user_id', user.id)
-        .single()
+      // Database-backed Atomic Rate Limiting (5 seconds per user for Cat API)
+      const { data: allowed, error: limitError } = await supabaseAdmin.rpc(
+        'check_and_increment_rate_limit',
+        { p_user_id: user.id, p_limit_seconds: 5, p_max_calls: 1 }
+      )
 
-      const now = new Date()
-      if (rateLimit?.last_call) {
-        const elapsed = now.getTime() - new Date(rateLimit.last_call).getTime()
-        if (elapsed < 5000) {
-          return new Response(JSON.stringify({ error: 'Rate limited. Please wait 5 seconds.' }), { 
-            status: 429, 
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          })
-        }
+      if (limitError || !allowed) {
+        return new Response(JSON.stringify({ error: 'Rate limited. Please wait 5 seconds.' }), { 
+          status: 429, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        })
       }
 
       let endpoint = `${BASE_URL}/images/search?has_breeds=1`
@@ -102,15 +114,6 @@ if (!CAT_API_KEY) {
       }
       
       const data = await res.json()
-
-      // Upsert rate limit on successful API call
-      await supabaseAdmin
-        .from('api_rate_limits')
-        .upsert({ 
-          user_id: user.id, 
-          last_call: now.toISOString(), 
-          call_count: (rateLimit?.call_count || 0) + 1 
-        })
       
       return new Response(
         JSON.stringify(data[0] || null),

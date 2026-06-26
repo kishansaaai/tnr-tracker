@@ -3,6 +3,15 @@ import { Button } from '../UI/Button'
 import { getRandomCat } from '../../lib/catApi'
 import { supabase } from '../../lib/supabase'
 
+/**
+ * Component providing a form to log new community cats.
+ * Includes KittyCam vision scanning (AI automated ear-tip spayed/neutered checks).
+ * 
+ * @param {object} props - Component properties.
+ * @param {function} props.onAdd - Callback triggered with form state and photo file when submitted.
+ * @param {boolean} [props.uploading] - External uploading state.
+ * @param {function} [props.setUploading] - Setter to control external uploading indicator state.
+ */
 export function AddCatForm({ onAdd, uploading, setUploading }) {
   const [form, setForm] = useState({
     name: '',

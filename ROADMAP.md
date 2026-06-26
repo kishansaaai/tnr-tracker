@@ -7,7 +7,7 @@ This roadmap outlines the technical and feature evolution of the TNR Tracker pla
 ## 🏗️ Phase 1: MVP Hardening & Security (Months 1-3)
 
 ### Security & Access Control
-- [ ] **Row Level Security (RLS) Hardening**
+- [x] **Row Level Security (RLS) Hardening**
   - Implement granular policies on `traps`, `recoveries`, and `medications` tables restricting write access to only the assigned user/creator or admins.
   - Set up audit logs for volunteer status updates to monitor database mutations.
 - [x] **Frontend Performance Optimization**
@@ -47,14 +47,14 @@ This roadmap outlines the technical and feature evolution of the TNR Tracker pla
 ## 🏥 Phase 3: Clinic & Recovery Integrations (Months 7-12)
 
 ### Medical Ward Workflow
-- [ ] **Medication Tracking**
+- [x] **Medication Tracking**
   - Add specific dosages, times, and administrator logging for recovery medications.
   - Implement visual notifications and alert logs when a cat's 48-hour recovery hold time is completed.
 - [ ] **Veterinary Export Upgrades**
   - Expand the Vet Export feature to support customized CSV and PDF generation conforming to regional clinic intake templates.
 
 ### Data Portability
-- [ ] ** Municipal Reporting Tools**
-  - Build query builders to automatically compile monthly statistics (e.g., number of cats TNR'd, neuter percentage, active traps) for municipal grant applications.
+- [x] **Municipal Grant Reporting Tools**
+  - Build quarterly reporting engines with estimated funding calculations to compile municipal grant application summaries.
 - [ ] **Advanced Importing**
   - Allow bulk import of colony metadata and cat history via Excel/CSV spreadsheets to help organizations migrate from legacy tracking methods.

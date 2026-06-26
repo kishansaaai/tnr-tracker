@@ -39,23 +39,26 @@ export function sanitizeForPrompt(str) {
 }
 
 /**
- * Solves the Traveling Salesperson Problem using a nearest-neighbor greedy heuristic
- * followed by a 2-opt improvement pass. Uses Haversine distance for geospatial accuracy.
+ * Solves the Traveling Salesperson Problem (TSP) using a nearest-neighbor greedy heuristic
+ * (using Euclidean distance calculations for rapid coordinate selection) followed by a
+ * 2-opt improvement pass (using Haversine distance calculations for precise geodetic path refinement).
+ * 
  * @param {Array<{id: string, lat: number, lng: number}>} traps - Array of trap coordinates.
  * @returns {Array} Ordered route of traps starting from traps[0].
  */
 export function computeRoute(traps) {
   if (traps.length <= 1) return traps
   const remaining = [...traps]
-  const route = [remaining.shift()]
+  let route = [remaining.shift()]
 
-  // Nearest-neighbor greedy
+  // Nearest-neighbor greedy using Euclidean distance
   while (remaining.length > 0) {
     const last = route[route.length - 1]
     let nearest = 0
     let nearestDist = Infinity
     for (let i = 0; i < remaining.length; i++) {
-      const dist = haversineDistance(last.lat, last.lng, remaining[i].lat, remaining[i].lng)
+      // Euclidean distance squared (faster than Math.sqrt)
+      const dist = Math.pow(last.lat - remaining[i].lat, 2) + Math.pow(last.lng - remaining[i].lng, 2)
       if (dist < nearestDist) {
         nearestDist = dist
         nearest = i
@@ -64,22 +67,34 @@ export function computeRoute(traps) {
     route.push(remaining.splice(nearest, 1)[0])
   }
 
-  // 2-opt improvement (max 50 iterations)
+  // Helper function to calculate total route distance in Haversine
+  const getRouteDistance = (r) => {
+    let d = 0
+    for (let i = 0; i < r.length - 1; i++) {
+      d += haversineDistance(r[i].lat, r[i].lng, r[i+1].lat, r[i+1].lng)
+    }
+    return d
+  }
+
+  // 2-opt refinement using Haversine distance (max 200 iterations or delta < 0.0001)
+  let bestDist = getRouteDistance(route)
   let improved = true
   let iterations = 0
-  while (improved && iterations < 50) {
+  
+  while (improved && iterations < 200) {
     improved = false
     iterations++
     for (let i = 1; i < route.length - 1; i++) {
       for (let j = i + 1; j < route.length; j++) {
-        const d1 = haversineDistance(route[i-1].lat, route[i-1].lng, route[i].lat, route[i].lng)
-          + haversineDistance(route[j].lat, route[j].lng, route[Math.min(j+1, route.length-1)].lat, route[Math.min(j+1, route.length-1)].lng)
-        const d2 = haversineDistance(route[i-1].lat, route[i-1].lng, route[j].lat, route[j].lng)
-          + haversineDistance(route[i].lat, route[i].lng, route[Math.min(j+1, route.length-1)].lat, route[Math.min(j+1, route.length-1)].lng)
-        if (d2 < d1) {
-          const segment = route.splice(i, j - i + 1)
-          segment.reverse()
-          route.splice(i, 0, ...segment)
+        const newRoute = [...route]
+        const segment = newRoute.splice(i, j - i + 1)
+        segment.reverse()
+        newRoute.splice(i, 0, ...segment)
+        
+        const newDist = getRouteDistance(newRoute)
+        if (bestDist - newDist > 0.0001) {
+          route = newRoute
+          bestDist = newDist
           improved = true
         }
       }
@@ -87,5 +102,59 @@ export function computeRoute(traps) {
   }
 
   return route
+}
+
+/**
+ * Searches a text block for a keyword, ensuring it is not preceded by any negation terms
+ * (e.g. "not", "never", "no longer") in the local preceding clause context.
+ * 
+ * @param {string} text - The text block (e.g. cat description or health notes) to search.
+ * @param {string} keyword - The target word or trait to look for.
+ * @returns {boolean} True if the keyword is found and is not negated; false otherwise.
+ */
+export function hasKeywordWithoutNegation(text, keyword) {
+  let searchFrom = 0
+  const normalized = text.toLowerCase()
+  const lowerKeyword = keyword.toLowerCase()
+  
+  while (true) {
+    const idx = normalized.indexOf(lowerKeyword, searchFrom)
+    if (idx === -1) return false
+    
+    const precedingAll = normalized.slice(0, idx)
+    
+    // Split sentences or conjunction clauses
+    const clauseStartIdx = Math.max(
+      precedingAll.lastIndexOf('.'),
+      precedingAll.lastIndexOf(','),
+      precedingAll.lastIndexOf(';'),
+      precedingAll.lastIndexOf('!'),
+      precedingAll.lastIndexOf('?'),
+      precedingAll.lastIndexOf(' but '),
+      precedingAll.lastIndexOf(' and '),
+      precedingAll.lastIndexOf('\n')
+    )
+    const clauseStart = clauseStartIdx === -1 ? 0 : (clauseStartIdx + 1)
+    const startOfSearch = Math.max(clauseStart, idx - 40)
+    const precedingClauseText = precedingAll.slice(startOfSearch).trim()
+    
+    const words = precedingClauseText.split(/[\s\-_]+/).filter(Boolean)
+    
+    const denylist = [
+      'not', 'no', 'never', "isn't", "aren't", "doesn't", "won't", 
+      "wasn't", "couldn't", "shouldn't", "can't", 'hardly', 'barely', 
+      'formerly', 'previously', 'used to be', 'no longer', 'not at all'
+    ]
+    
+    const isNegated = denylist.some(neg => {
+      if (neg.includes(' ')) {
+        return precedingClauseText.includes(neg)
+      }
+      return words.includes(neg)
+    })
+    
+    if (!isNegated) return true
+    searchFrom = idx + lowerKeyword.length
+  }
 }
 
