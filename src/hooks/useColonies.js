@@ -13,7 +13,7 @@ export function useColonies() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [page, setPage] = useState(0)
-  const PAGE_SIZE = 50
+  const PAGE_SIZE = 1000
   const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {

@@ -13,7 +13,7 @@ if (!CAT_API_KEY) {
   Deno.serve((req) => {
     const origin = req.headers.get('Origin') || ''
     const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
-    const allowedOrigin = (isLocal || origin.endsWith('.vercel.app')) ? origin : 'https://tnr-tracker.vercel.app'
+    const allowedOrigin = (isLocal || origin === 'https://tnr-tracker.vercel.app') ? origin : 'https://tnr-tracker.vercel.app'
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowedOrigin,
       'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -30,7 +30,7 @@ if (!CAT_API_KEY) {
   Deno.serve(async (req) => {
     const origin = req.headers.get('Origin') || ''
     const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
-    const allowedOrigin = (isLocal || origin.endsWith('.vercel.app')) ? origin : 'https://tnr-tracker.vercel.app'
+    const allowedOrigin = (isLocal || origin === 'https://tnr-tracker.vercel.app') ? origin : 'https://tnr-tracker.vercel.app'
     
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowedOrigin,
@@ -103,7 +103,14 @@ if (!CAT_API_KEY) {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     } catch (error: any) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      console.error('Edge Function Error:', error)
+      const isUserFriendly = error.message && (
+        error.message.includes('Cat API') || 
+        error.message.includes('Rate limit') || 
+        error.message.includes('action')
+      )
+      const message = isUserFriendly ? error.message : 'An unexpected error occurred'
+      return new Response(JSON.stringify({ error: message }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       })
