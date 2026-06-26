@@ -50,7 +50,7 @@ if (!CAT_API_KEY) {
       const body = await req.json()
       const { action } = body
 
-      if (action !== undefined && action !== 'gif') {
+      if (action !== undefined && action !== 'gif' && action !== 'image') {
         return new Response(JSON.stringify({ error: 'Invalid action' }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
         })
