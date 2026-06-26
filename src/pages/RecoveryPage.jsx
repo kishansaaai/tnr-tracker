@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useRecoveries } from '../hooks/useRecovery'
 import { useAllCats } from '../hooks/useCats'
@@ -26,6 +26,10 @@ export default function RecoveryPage() {
   })
   const [showReleased, setShowReleased] = useState(false)
   const [showReleaseAnimation, setShowReleaseAnimation] = useState(false)
+
+  useEffect(() => {
+    document.title = 'TNR Tracker — Recovery Ward'
+  }, [])
 
   const availableCats = cats.filter(cat => {
     const alreadyRecovering = activeRecoveries.some(r => r.cat_id === cat.id)

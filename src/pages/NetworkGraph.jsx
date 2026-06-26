@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 import { supabase } from '../lib/supabase'
+import toast from 'react-hot-toast'
 
 export default function NetworkGraph() {
   const [data, setData] = useState({ nodes: [], links: [] })
@@ -66,6 +67,7 @@ export default function NetworkGraph() {
   }, [])
 
   useEffect(() => {
+    document.title = 'TNR Tracker — Network Graph'
     fetchInitialGraphData()
   }, [])
 
@@ -252,7 +254,7 @@ export default function NetworkGraph() {
                   <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">CLICK TO EXPAND DATA</span>
                 )}
               </div>
-              <button onClick={() => setSelectedNode(null)} className="text-gray-400 hover:text-gray-900 p-1">✕</button>
+              <button onClick={() => setSelectedNode(null)} aria-label="Close panel" className="text-gray-400 hover:text-gray-900 p-1">✕</button>
             </div>
             
             <div className="flex-1 space-y-4">
@@ -384,6 +386,7 @@ export default function NetworkGraph() {
                 nodes: prev.nodes.map(n => {
                   if (n.id === node.id) {
                     if (n.fx !== undefined && n.fx !== null) {
+                      setSelectedNode(null)
                       return { ...n, fx: null, fy: null }
                     } else {
                       return { ...n, fx: n.x, fy: n.y }

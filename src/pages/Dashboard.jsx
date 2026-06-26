@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useColonies } from '../hooks/useColonies'
@@ -35,6 +36,10 @@ export default function Dashboard() {
   const { colonies, loading: coloniesLoading } = useColonies()
   const { cats, loading: catsLoading } = useAllCats()
   const { traps } = useTraps()
+
+  useEffect(() => {
+    document.title = 'TNR Tracker — Dashboard'
+  }, [])
 
   const loading = coloniesLoading || catsLoading
   const totalCats = cats.length

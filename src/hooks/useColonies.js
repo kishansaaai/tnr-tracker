@@ -7,6 +7,15 @@ export function useColonies() {
 
   useEffect(() => {
     fetchColonies()
+    
+    const channel = supabase
+      .channel('colonies-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colonies' }, () => {
+        fetchColonies()
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [])
 
   async function fetchColonies() {

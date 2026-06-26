@@ -32,14 +32,14 @@ function MapClickHandler({ onMapClick, isPlacingPin }) {
   return null
 }
 
-function MapBoundsController({ colonies }) {
+function MapBoundsController({ colonies, loading }) {
   const map = useMap()
   useEffect(() => {
-    if (colonies && colonies.length > 0) {
+    if (!loading && colonies && colonies.length > 0) {
       const bounds = colonies.map(c => [c.lat, c.lng])
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
     }
-  }, [colonies, map])
+  }, [colonies, loading, map])
   return null
 }
 
@@ -87,7 +87,7 @@ function createRouteNumberIcon(number) {
 }
 
 export default function MapPage() {
-  const { colonies, createColony } = useColonies()
+  const { colonies, loading: coloniesLoading, createColony } = useColonies()
   const { traps, createTrap } = useTraps()
   const { cats } = useAllCats()
   const { user } = useAuth()
@@ -106,6 +106,10 @@ export default function MapPage() {
     if (pinMode === 'trap') setShowTrapModal(true)
     setPinMode(null)
   }
+
+  useEffect(() => {
+    document.title = 'TNR Tracker — Colony Map'
+  }, [])
 
   async function handleAddColony(data) {
     try {
@@ -165,6 +169,24 @@ export default function MapPage() {
 
   return (
     <div className="relative flex flex-col" style={{ height: 'calc(100vh - 56px)' }}>
+      {!coloniesLoading && colonies.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center z-[300] pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-8 text-center max-w-sm pointer-events-auto border border-emerald-100">
+            <div className="text-5xl mb-3">🗺️</div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">No colonies yet</h2>
+            <p className="text-gray-500 text-sm mb-4">
+              Click <strong>"+ Add Colony"</strong> below, then tap anywhere on the map to place your first colony pin.
+            </p>
+            <button
+              onClick={() => setPinMode('colony')}
+              className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-colors"
+            >
+              Add First Colony
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={`flex-1 ${pinMode ? 'cursor-crosshair' : ''}`}>
         <MapContainer
           center={[20, 0]}
@@ -178,7 +200,7 @@ export default function MapPage() {
           />
 
           <MapClickHandler onMapClick={handleMapClick} isPlacingPin={!!pinMode} />
-          <MapBoundsController colonies={colonies} />
+          <MapBoundsController colonies={colonies} loading={coloniesLoading} />
 
           {colonies.map(colony => (
             <Marker
@@ -324,6 +346,7 @@ export default function MapPage() {
           onClick={() => setPinMode('colony')}
           variant={pinMode === 'colony' ? 'amber' : 'primary'}
           size="lg"
+          aria-label="Add Colony Pin"
           className="shadow-xl font-bold px-8 py-3 text-sm"
         >
           + Add Colony
@@ -332,6 +355,7 @@ export default function MapPage() {
           onClick={() => setPinMode('trap')}
           variant={pinMode === 'trap' ? 'amber' : 'secondary'}
           size="lg"
+          aria-label="Add Trap Pin"
           className="shadow-xl font-bold px-8 py-3 text-sm bg-white"
         >
           + Add Trap

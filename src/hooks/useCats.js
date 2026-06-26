@@ -78,6 +78,15 @@ export function useAllCats() {
 
   useEffect(() => {
     fetchAllCats()
+    
+    const channel = supabase
+      .channel('cats-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cats' }, () => {
+        fetchAllCats()
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [])
 
   async function fetchAllCats() {

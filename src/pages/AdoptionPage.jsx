@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAllCats } from '../hooks/useCats'
 import { useColonies } from '../hooks/useColonies'
@@ -82,6 +82,10 @@ function PipelineCatCard({ cat, colonies, onMove, stages }) {
 export default function AdoptionPage() {
   const { cats, loading, fetchAllCats } = useAllCats()
   const { colonies } = useColonies()
+
+  useEffect(() => {
+    document.title = 'TNR Tracker — Adoption Pipeline'
+  }, [])
   const [filterColony, setFilterColony] = useState('')
 
   const filteredCats = filterColony

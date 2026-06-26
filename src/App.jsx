@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { Navbar } from './components/UI/Navbar'
 import { PawLoader } from './components/UI/PawLoader'
+import { ErrorBoundary } from './components/UI/ErrorBoundary'
 import Auth from './pages/Auth'
 import ColonyDetail from './pages/ColonyDetail'
 import Dashboard from './pages/Dashboard'
@@ -53,9 +54,11 @@ function AppRoutes() {
           <div className="flex flex-col h-screen">
             <Navbar />
             <div className="flex-1 overflow-hidden">
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
-                <MapPage />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
+                  <MapPage />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -115,9 +118,11 @@ function AppRoutes() {
           <div className="flex flex-col h-screen">
             <Navbar />
             <div className="flex-1 overflow-hidden">
-              <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
-                <NetworkGraph />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
+                  <NetworkGraph />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </AdminRoute>

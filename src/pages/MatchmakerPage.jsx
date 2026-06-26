@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Button } from '../components/UI/Button'
@@ -36,6 +36,9 @@ const questions = [
   }
 ]
 
+const energyLabels = { 1: 'low-energy', 2: 'medium-energy', 3: 'high-energy' }
+const activityLabels = { 1: 'a cuddler', 2: 'a playful companion', 3: 'an independent spirit' }
+
 export default function MatchmakerPage() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
@@ -43,6 +46,11 @@ export default function MatchmakerPage() {
   const [loading, setLoading] = useState(false)
   const [loadingGif, setLoadingGif] = useState(null)
   const [match, setMatch] = useState(null)
+  const [matchScore, setMatchScore] = useState(0)
+
+  useEffect(() => {
+    document.title = 'TNR Tracker — Cat Matchmaker'
+  }, [])
 
   const handleAnswer = (questionId, optionScore) => {
     setAnswers(prev => ({ ...prev, [questionId]: optionScore }))
@@ -104,6 +112,7 @@ export default function MatchmakerPage() {
         }
       }
 
+      setMatchScore(highestScore)
       setMatch(bestMatch)
 
     } catch (e) {
@@ -132,6 +141,15 @@ export default function MatchmakerPage() {
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-8">{questions[currentStep].title}</h2>
+
+          {currentStep > 0 && (
+            <button
+              onClick={() => setCurrentStep(s => s - 1)}
+              className="mb-6 text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mx-auto"
+            >
+              ← Back
+            </button>
+          )}
 
           <div className="space-y-4">
             {questions[currentStep].options.map(option => (
@@ -184,7 +202,8 @@ export default function MatchmakerPage() {
           <div className="bg-white rounded-xl p-5 border border-rose-50 text-left mb-8 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-2 border-b border-rose-50 pb-2">Why you're a match:</h3>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Based on your answers, <strong>{match.name || 'this kitty'}</strong> fits your lifestyle perfectly! They are {match.gender === 'female' ? 'a sweet girl' : 'a handsome boy'} ready for a forever home.
+              You're looking for a {energyLabels[answers[1]] || 'balanced'} companion who is {activityLabels[answers[3]] || 'adaptable'}.
+              <strong> {match.name || 'This kitty'}</strong> matched your lifestyle with a compatibility score of {matchScore}/10.
               {match.health_notes && ` Note: ${match.health_notes}`}
             </p>
           </div>
