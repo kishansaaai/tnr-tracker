@@ -11,7 +11,7 @@ export function useTraps(colonyId) {
 
   async function fetchTraps() {
     setLoading(true)
-    let query = supabase.from('traps').select('*, profiles(name)').order('created_at', { ascending: false })
+    let query = supabase.from('traps').select('*, profiles:public_profiles(name)').order('created_at', { ascending: false })
     if (colonyId) query = query.eq('colony_id', colonyId)
     const { data, error } = await query
     if (!error) setTraps(data || [])
@@ -22,7 +22,7 @@ export function useTraps(colonyId) {
     const { data, error } = await supabase
       .from('traps')
       .insert(trapData)
-      .select('*, profiles(name)')
+      .select('*, profiles:public_profiles(name)')
       .single()
     if (error) throw error
     setTraps(prev => [data, ...prev])
@@ -34,7 +34,7 @@ export function useTraps(colonyId) {
       .from('traps')
       .update(updates)
       .eq('id', id)
-      .select('*, profiles(name)')
+      .select('*, profiles:public_profiles(name)')
       .single()
     if (error) throw error
     setTraps(prev => prev.map(t => t.id === id ? data : t))

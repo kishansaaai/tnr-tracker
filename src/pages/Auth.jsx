@@ -77,12 +77,13 @@ export default function Auth() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email or Username</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 required
+                type="email"
                 value={form.email}
                 onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="you@example.com or admin"
+                placeholder="you@example.com"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               />
             </div>

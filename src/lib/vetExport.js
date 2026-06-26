@@ -38,6 +38,7 @@ export function generateVetSummary(cats, colonies) {
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="UTF-8">
       <title>TNR Tracker — Vet Clinic Summary</title>
       <style>
         @media print {
@@ -196,9 +197,9 @@ export function generateVetSummary(cats, colonies) {
 
 export function openVetSummary(cats, colonies) {
   const html = generateVetSummary(cats, colonies)
-  const win = window.open('', '_blank')
-  if (win) {
-    win.document.write(html)
-    win.document.close()
-  }
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
 }

@@ -36,9 +36,15 @@ ALTER TABLE recoveries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE medications ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Auth read recoveries" ON recoveries FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Auth insert recoveries" ON recoveries FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Auth update recoveries" ON recoveries FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Auth delete recoveries" ON recoveries FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Auth insert recoveries" ON recoveries FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Auth update recoveries" ON recoveries FOR UPDATE TO authenticated USING (
+    auth.uid() = created_by OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Auth delete recoveries" ON recoveries FOR DELETE TO authenticated USING (
+    auth.uid() = created_by OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
 
 CREATE POLICY "Auth read medications" ON medications FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Auth insert medications" ON medications FOR INSERT TO authenticated WITH CHECK (
@@ -47,8 +53,18 @@ CREATE POLICY "Auth insert medications" ON medications FOR INSERT TO authenticat
     WHERE id = recovery_id AND created_by = auth.uid()
   )
 );
-CREATE POLICY "Auth update medications" ON medications FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Auth delete medications" ON medications FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Auth update medications" ON medications FOR UPDATE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM recoveries
+    WHERE id = recovery_id AND created_by = auth.uid()
+  ) OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
+CREATE POLICY "Auth delete medications" ON medications FOR DELETE TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM recoveries
+    WHERE id = recovery_id AND created_by = auth.uid()
+  ) OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);
 
 ALTER PUBLICATION supabase_realtime ADD TABLE recoveries;
 ALTER PUBLICATION supabase_realtime ADD TABLE medications;
@@ -62,19 +78,23 @@ ALTER TABLE cats ADD COLUMN IF NOT EXISTS pipeline_status TEXT
 ALTER TABLE cats ADD COLUMN IF NOT EXISTS foster_name TEXT DEFAULT '';
 ALTER TABLE cats ADD COLUMN IF NOT EXISTS adoption_date TIMESTAMPTZ;
 
-CREATE TABLE IF NOT EXISTS adoptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  cat_id UUID REFERENCES cats(id) ON DELETE CASCADE,
-  adopter_name TEXT,
-  adopter_contact TEXT,
-  created_by UUID REFERENCES profiles(id),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+DROP TABLE IF EXISTS adoptions CASCADE;
 
-ALTER TABLE adoptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth read adoptions" ON adoptions FOR SELECT TO authenticated USING (
-  created_by = auth.uid() OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
-CREATE POLICY "Auth insert adoptions" ON adoptions FOR INSERT TO authenticated WITH CHECK (
-  created_by = auth.uid() OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+ALTER TABLE colonies ADD CONSTRAINT colonies_lat_range CHECK (lat BETWEEN -90 AND 90);
+ALTER TABLE colonies ADD CONSTRAINT colonies_lng_range CHECK (lng BETWEEN -180 AND 180);
+ALTER TABLE traps ADD CONSTRAINT traps_lat_range CHECK (lat BETWEEN -90 AND 90);
+ALTER TABLE traps ADD CONSTRAINT traps_lng_range CHECK (lng BETWEEN -180 AND 180);
+
+CREATE OR REPLACE VIEW public_profiles AS SELECT id, name FROM profiles;
+GRANT SELECT ON public_profiles TO authenticated;
+
+DROP POLICY IF EXISTS "Authenticated users can read all profiles" ON profiles;
+CREATE POLICY "Users can read own profile, admins read all"
+  ON profiles FOR SELECT TO authenticated
+  USING (
+    auth.uid() = id OR
+    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+  );
+  
+ALTER TABLE updates DROP CONSTRAINT IF EXISTS updates_message_check;
+ALTER TABLE updates ADD CONSTRAINT updates_message_check CHECK (message !~ '<[^>]+>');

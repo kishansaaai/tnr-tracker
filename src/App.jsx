@@ -26,6 +26,20 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+function AdminRoute({ children }) {
+  const { isAdmin, loading, user } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+        <PawLoader />
+      </div>
+    )
+  }
+  if (!user) return <Navigate to="/auth" replace />
+  if (!isAdmin) return <Navigate to="/" replace />
+  return children
+}
+
 function AppRoutes() {
   const { user } = useAuth()
 
@@ -93,24 +107,24 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/network" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <div className="flex flex-col h-screen">
             <Navbar />
             <div className="flex-1 overflow-hidden">
               <NetworkGraph />
             </div>
           </div>
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="/volunteers" element={
-        <ProtectedRoute>
+        <AdminRoute>
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
               <Volunteers />
             </div>
           </div>
-        </ProtectedRoute>
+        </AdminRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

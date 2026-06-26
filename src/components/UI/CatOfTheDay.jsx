@@ -30,6 +30,7 @@ export function CatOfTheDay() {
         <img 
           src={cat.url} 
           alt="Cat of the day" 
+          referrerPolicy="no-referrer"
           className="absolute inset-0 w-full h-full object-cover"
         />
       </div>

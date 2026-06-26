@@ -22,7 +22,7 @@ export function useUpdates(colonyId) {
         // Fetch the full update with profile info
         const { data } = await supabase
           .from('updates')
-          .select('*, profiles(name)')
+          .select('*, profiles:public_profiles(name)')
           .eq('id', payload.new.id)
           .single()
         if (data) setUpdates(prev => {
@@ -39,7 +39,7 @@ export function useUpdates(colonyId) {
     setLoading(true)
     const { data, error } = await supabase
       .from('updates')
-      .select('*, profiles(name)')
+      .select('*, profiles:public_profiles(name)')
       .eq('colony_id', colonyId)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -54,7 +54,7 @@ export function useUpdates(colonyId) {
     const { data, error } = await supabase
       .from('updates')
       .insert({ colony_id: colonyId, message, posted_by: userId })
-      .select('*, profiles(name)')
+      .select('*, profiles:public_profiles(name)')
       .single()
     if (error) throw error
     // Real-time will also fire, but we add locally for instant feel

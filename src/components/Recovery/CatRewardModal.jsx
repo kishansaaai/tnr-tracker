@@ -19,7 +19,7 @@ export function CatRewardModal({ onDismiss }) {
           {!cat ? (
             <div className="absolute inset-0 flex items-center justify-center text-4xl animate-bounce">🐈</div>
           ) : (
-            <img src={cat.url} alt="Reward Cat" className="w-full h-full object-cover animate-[fadeIn_0.5s_ease-in]" />
+            <img src={cat.url} alt="Reward Cat" referrerPolicy="no-referrer" className="w-full h-full object-cover animate-[fadeIn_0.5s_ease-in]" />
           )}
         </div>
 

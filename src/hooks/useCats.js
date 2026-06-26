@@ -56,7 +56,11 @@ export function useCats(colonyId) {
     if (!ALLOWED_TYPES.includes(file.type)) throw new Error('Only JPEG, PNG, WebP, or GIF allowed')
     
     const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }[file.type]
-    const path = `${catId}-${Date.now()}.${ext}`
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('You must be logged in to upload photos')
+    
+    const path = `${user.id}/${catId}-${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('cat-photos')
       .upload(path, file)

@@ -8,7 +8,8 @@ This roadmap outlines the extremely granular, minute-by-minute technical evoluti
 
 ### Sprint 1: Security & Architecture Audits
 - [ ] **Row Level Security (RLS) Hardening**
-  - Implement granular policies on the `colonies` table restricting `UPDATE` to only the creator or org-admins.
+  - ~~Implement granular policies on the `colonies` table restricting `UPDATE` to only the creator or org-admins.~~ (Completed)
+  - Implement granular policies on `traps`, `recoveries`, and `medications` tables restricting `UPDATE` and `DELETE` to only the assigned user/creator or org-admins.
   - Secure `cats` and `traps` tables ensuring volunteers can only view data within a 50km radius of their location to prevent data-scraping of vulnerable colonies.
   - Implement Supabase Vault for encrypting sensitive volunteer PII (Personally Identifiable Information).
 - [ ] **Frontend Performance Optimization**

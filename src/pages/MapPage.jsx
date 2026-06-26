@@ -12,11 +12,15 @@ import { Button } from '../components/UI/Button'
 import toast from 'react-hot-toast'
 
 import L from 'leaflet'
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
+import iconUrl from 'leaflet/dist/images/marker-icon.png'
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
+
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
 })
 
 function MapClickHandler({ onMapClick, isPlacingPin }) {
@@ -194,17 +198,19 @@ export default function MapPage() {
           ))}
 
           {/* Route planner polyline and numbered markers */}
-          {showRoute && routePositions.length > 1 && (
+          {showRoute && routePositions.length > 0 && (
             <>
-              <Polyline
-                positions={routePositions}
-                pathOptions={{
-                  color: '#7c3aed',
-                  weight: 3,
-                  dashArray: '10 6',
-                  opacity: 0.8,
-                }}
-              />
+              {routePositions.length > 1 && (
+                <Polyline
+                  positions={routePositions}
+                  pathOptions={{
+                    color: '#7c3aed',
+                    weight: 3,
+                    dashArray: '10 6',
+                    opacity: 0.8,
+                  }}
+                />
+              )}
               {routeTraps.map((trap, idx) => (
                 <Marker
                   key={`route-${trap.id}`}
@@ -254,33 +260,36 @@ export default function MapPage() {
         </div>
       )}
 
-      {/* Route planner banner */}
-      {showRoute && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white shadow-lg rounded-full px-4 py-2 flex items-center gap-3">
-          <span className="text-sm font-medium">
-            🗺️ Route: {routeTraps.length} traps • {totalDistance} km
-          </span>
-          <button
-            onClick={() => setShowRoute(false)}
-            className="text-blue-200 hover:text-white text-xs underline"
-          >
-            Hide
-          </button>
-        </div>
-      )}
+      {/* Active Banners Container */}
+      {(showRoute || showHeatmap) && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[300] flex flex-col gap-2 items-center pointer-events-none">
+          {showRoute && (
+            <div className="pointer-events-auto bg-blue-600 text-white shadow-lg rounded-full px-4 py-2 flex items-center gap-3">
+              <span className="text-sm font-medium">
+                🗺️ Route: {routeTraps.length} traps • {totalDistance} km
+              </span>
+              <button
+                onClick={() => setShowRoute(false)}
+                className="text-blue-200 hover:text-white text-xs underline"
+              >
+                Hide
+              </button>
+            </div>
+          )}
 
-      {/* Heatmap banner */}
-      {showHeatmap && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-30 bg-orange-600 text-white shadow-lg rounded-full px-4 py-2 flex items-center gap-3">
-          <span className="text-sm font-medium">
-            🔥 TNR Priority Zones Active
-          </span>
-          <button
-            onClick={() => setShowHeatmap(false)}
-            className="text-orange-200 hover:text-white text-xs underline"
-          >
-            Hide
-          </button>
+          {showHeatmap && (
+            <div className="pointer-events-auto bg-orange-600 text-white shadow-lg rounded-full px-4 py-2 flex items-center gap-3">
+              <span className="text-sm font-medium">
+                🔥 TNR Priority Zones Active
+              </span>
+              <button
+                onClick={() => setShowHeatmap(false)}
+                className="text-orange-200 hover:text-white text-xs underline"
+              >
+                Hide
+              </button>
+            </div>
+          )}
         </div>
       )}
 

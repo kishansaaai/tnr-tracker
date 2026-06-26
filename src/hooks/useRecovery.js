@@ -13,7 +13,7 @@ export function useRecoveries() {
     setLoading(true)
     const { data, error } = await supabase
       .from('recoveries')
-      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles(name), medications(*)')
+      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
       .order('created_at', { ascending: false })
     if (!error) setRecoveries(data || [])
     setLoading(false)
@@ -23,7 +23,7 @@ export function useRecoveries() {
     const { data, error } = await supabase
       .from('recoveries')
       .insert(recoveryData)
-      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles(name), medications(*)')
+      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
       .single()
     if (error) throw error
     setRecoveries(prev => [data, ...prev])
@@ -35,7 +35,7 @@ export function useRecoveries() {
       .from('recoveries')
       .update(updates)
       .eq('id', id)
-      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles(name), medications(*)')
+      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
       .single()
     if (error) throw error
     setRecoveries(prev => prev.map(r => r.id === id ? data : r))

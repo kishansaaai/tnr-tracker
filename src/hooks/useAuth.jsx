@@ -31,24 +31,15 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .single()
     
-    if (error || !data) {
-      const email = sessionUser?.email || ''
-      const name = sessionUser?.user_metadata?.name || email.split('@')[0] || 'Volunteer'
-      const newProfile = {
-        id: userId,
-        name: name,
-        role: 'volunteer'
-      }
-      
-      const { data: insertedData } = await supabase
-        .from('profiles')
-        .insert(newProfile)
-        .select()
-        .single()
-      
-      setProfile(insertedData || newProfile)
-    } else {
+    if (!error && data) {
       setProfile(data)
+    } else {
+      // Fallback for UI if DB trigger is delayed, do not write to DB here
+      setProfile({
+        id: userId,
+        name: sessionUser?.user_metadata?.name || 'Volunteer',
+        role: 'volunteer'
+      })
     }
     setLoading(false)
   }

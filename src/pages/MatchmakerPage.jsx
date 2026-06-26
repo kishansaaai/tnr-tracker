@@ -124,7 +124,7 @@ export default function MatchmakerPage() {
         <div className="text-center py-20 animate-[fadeIn_0.3s]">
           <div className="w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-lg border-4 border-rose-100 flex items-center justify-center bg-gray-50">
             {loadingGif ? (
-              <img src={loadingGif} alt="Loading..." className="w-full h-full object-cover" />
+              <img src={loadingGif} alt="Loading..." referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             ) : (
               <div className="animate-bounce text-6xl">🐈</div>
             )}
@@ -163,9 +163,7 @@ export default function MatchmakerPage() {
           </div>
 
           <div className="flex justify-center gap-4">
-            <Button size="lg" className="bg-rose-600 hover:bg-rose-700 text-white border-rose-700" onClick={() => { toast.success('Adoption application submitted!'); setMatch(null); setCurrentStep(0); setAnswers({}); }}>
-              Apply to Adopt 📝
-            </Button>
+
             <Button size="lg" variant="secondary" onClick={() => { setMatch(null); setCurrentStep(0); setAnswers({}); }}>
               Retake Quiz
             </Button>
