@@ -1,7 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
+
+const cooldowns = new Map<string, number>()
 
 function sanitizeForPrompt(str: string) {
   return String(str || '').replace(/[`<>]/g, '').slice(0, 500)
@@ -47,17 +50,48 @@ Specific, actionable recommendations for the volunteers managing this colony.
 Be practical, compassionate, and specific. Use the actual data provided.`
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin') || ''
+  const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
+  const allowedOrigin = isLocal ? origin : 'https://tnr-tracker.vercel.app'
+  
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    if (authError || !user) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    }
+
+    // Rate Limiting (60 seconds per user)
+    const now = Date.now()
+    const lastCall = cooldowns.get(user.id) || 0
+    if (now - lastCall < 60000) {
+      return new Response(JSON.stringify({ error: 'Rate limited. Please wait 60 seconds.' }), { 
+        status: 429, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      })
+    }
+    cooldowns.set(user.id, now)
+
     if (!GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY in environment.")
 
     const { colony, cats, updates } = await req.json()

@@ -8,6 +8,52 @@ This document serves as the comprehensive technical manual, detailing every sing
 
 ---
 
+## 🚀 Getting Started (Local Development)
+
+To run TNR Tracker locally, follow these steps:
+
+### Prerequisites
+- Node.js (v18+)
+- Supabase CLI installed (`npm install -g supabase`)
+
+### Setup Instructions
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Environment Variables:**
+   Copy the example environment file and fill in your Supabase keys.
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Start the Database:**
+   Start the local Supabase stack.
+   ```bash
+   supabase start
+   ```
+
+4. **Initialize the Database:**
+   Run the schema and seed files in your Supabase SQL Editor (or via CLI):
+   - `supabase/schema.sql` (Creates tables and RLS policies)
+   - `supabase/migration_v2.sql` (Applies schema updates)
+   - `supabase/seed.sql` (Populates test data)
+
+5. **Deploy Edge Functions:**
+   Deploy the secure proxy functions locally.
+   ```bash
+   supabase functions serve
+   ```
+   *(For production: `supabase functions deploy gemini-proxy` and `supabase functions deploy cat-api-proxy`)*
+
+6. **Start the Frontend:**
+   ```bash
+   npm run dev
+   ```
+
+---
+
 ## 🛠️ 1. Technical Stack & Foundation
 
 ### Frontend

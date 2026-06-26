@@ -95,6 +95,14 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================
+-- INDEXES
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_cats_colony_id ON cats(colony_id);
+CREATE INDEX IF NOT EXISTS idx_traps_colony_id ON traps(colony_id);
+CREATE INDEX IF NOT EXISTS idx_cats_pipeline ON cats(pipeline_status);
+CREATE INDEX IF NOT EXISTS idx_recoveries_cat_id ON recoveries(cat_id);
+
+-- ============================================================
 -- RLS POLICIES
 -- ============================================================
 

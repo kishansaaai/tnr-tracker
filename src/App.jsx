@@ -1,17 +1,19 @@
+import React, { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { Navbar } from './components/UI/Navbar'
 import { PawLoader } from './components/UI/PawLoader'
 import Auth from './pages/Auth'
-import MapPage from './pages/MapPage'
 import ColonyDetail from './pages/ColonyDetail'
 import Dashboard from './pages/Dashboard'
 import Volunteers from './pages/Volunteers'
 import RecoveryPage from './pages/RecoveryPage'
 import AdoptionPage from './pages/AdoptionPage'
 import MatchmakerPage from './pages/MatchmakerPage'
-import NetworkGraph from './pages/NetworkGraph'
+
+const MapPage = React.lazy(() => import('./pages/MapPage'))
+const NetworkGraph = React.lazy(() => import('./pages/NetworkGraph'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -51,7 +53,9 @@ function AppRoutes() {
           <div className="flex flex-col h-screen">
             <Navbar />
             <div className="flex-1 overflow-hidden">
-              <MapPage />
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
+                <MapPage />
+              </Suspense>
             </div>
           </div>
         </ProtectedRoute>
@@ -111,7 +115,9 @@ function AppRoutes() {
           <div className="flex flex-col h-screen">
             <Navbar />
             <div className="flex-1 overflow-hidden">
-              <NetworkGraph />
+              <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
+                <NetworkGraph />
+              </Suspense>
             </div>
           </div>
         </AdminRoute>
