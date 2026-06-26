@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Custom hook to manage and fetch cats for a specific colony.
+ * Supports adding, updating, deleting, and uploading photos for cats.
+ * 
+ * @param {string} colonyId - The UUID of the colony to fetch cats for.
+ * @returns {object} Hook utilities: { cats, loading, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto }
+ */
 export function useCats(colonyId) {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,12 +19,13 @@ export function useCats(colonyId) {
 
   async function fetchCats() {
     setLoading(true)
-    const query = supabase.from('cats').select('*').order('created_at', { ascending: false })
-    if (colonyId) query.eq('colony_id', colonyId)
+    let query = supabase.from('cats').select('*').order('created_at', { ascending: false })
+    if (colonyId) query = query.eq('colony_id', colonyId)
     const { data, error } = await query
     if (!error) setCats(data || [])
     setLoading(false)
   }
+
 
   async function addCat(catData) {
     const { data, error } = await supabase
@@ -72,6 +80,12 @@ export function useCats(colonyId) {
   return { cats, loading, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto }
 }
 
+/**
+ * Custom hook to fetch all cats across all colonies.
+ * Sets up a realtime subscription to update state when the cats table changes.
+ * 
+ * @returns {object} Hook utilities: { cats, loading, fetchAllCats }
+ */
 export function useAllCats() {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)

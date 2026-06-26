@@ -79,7 +79,7 @@ export default function MatchmakerPage() {
         return
       }
 
-      // Deterministic personality-tag matching algorithm
+      // Hybrid heuristic matching algorithm
       const energyAnswer = answers[1] || 2
       const petsAnswer = answers[2] || 2
       const activityAnswer = answers[3] || 2
@@ -88,16 +88,41 @@ export default function MatchmakerPage() {
       let highestScore = -1
 
       for (const cat of cats) {
-        // Deterministically generate traits based on cat.id UUID string
+        // Deterministically generate base traits using the cat.id UUID hash
         let hash = 0
         for (let i = 0; i < cat.id.length; i++) {
           hash = cat.id.charCodeAt(i) + ((hash << 5) - hash)
         }
         
-        // Pseudo-random but deterministic personality stats (1-3 scale)
-        const catEnergy = Math.abs(hash % 3) + 1
-        const catSocial = Math.abs((hash >> 2) % 3) + 1
-        const catAffection = Math.abs((hash >> 4) % 3) + 1
+        let catEnergy = Math.abs(hash % 3) + 1
+        let catSocial = Math.abs((hash >> 2) % 3) + 1
+        let catAffection = Math.abs((hash >> 4) % 3) + 1
+
+        // Heuristically override traits based on real health/personality notes
+        const notes = (cat.health_notes || '').toLowerCase()
+        const name = (cat.name || '').toLowerCase()
+        const textToAnalyze = `${name} ${notes}`
+
+        // Energy levels parsing
+        if (textToAnalyze.includes('playful') || textToAnalyze.includes('active') || textToAnalyze.includes('energetic') || textToAnalyze.includes('kitten')) {
+          catEnergy = 3
+        } else if (textToAnalyze.includes('lazy') || textToAnalyze.includes('couch') || textToAnalyze.includes('calm') || textToAnalyze.includes('sleepy') || textToAnalyze.includes('quiet')) {
+          catEnergy = 1
+        }
+
+        // Social level parsing (with other pets)
+        if (textToAnalyze.includes('friendly') || textToAnalyze.includes('loves cats') || textToAnalyze.includes('good with dogs') || textToAnalyze.includes('social')) {
+          catSocial = 3
+        } else if (textToAnalyze.includes('shy') || textToAnalyze.includes('scared') || textToAnalyze.includes('hates') || textToAnalyze.includes('only cat') || textToAnalyze.includes('aggressive')) {
+          catSocial = 1
+        }
+
+        // Affection level parsing
+        if (textToAnalyze.includes('cuddly') || textToAnalyze.includes('lap') || textToAnalyze.includes('sweet') || textToAnalyze.includes('affectionate') || textToAnalyze.includes('purr')) {
+          catAffection = 1 // Cuddler
+        } else if (textToAnalyze.includes('independent') || textToAnalyze.includes('feral') || textToAnalyze.includes('aloof') || textToAnalyze.includes('skittish')) {
+          catAffection = 3 // Independent spirit
+        }
 
         // Calculate affinity score: lower distance is better.
         const energyDist = Math.abs(energyAnswer - catEnergy)
@@ -144,7 +169,16 @@ export default function MatchmakerPage() {
 
           {currentStep > 0 && (
             <button
-              onClick={() => setCurrentStep(s => s - 1)}
+              onClick={() => {
+                const prevStep = currentStep - 1
+                setAnswers(prev => {
+                  const updated = { ...prev }
+                  delete updated[questions[currentStep].id]
+                  delete updated[questions[prevStep].id]
+                  return updated
+                })
+                setCurrentStep(prevStep)
+              }}
               className="mb-6 text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1 mx-auto"
             >
               ← Back

@@ -1,3 +1,10 @@
+/**
+ * Compiles colony and cat data into a structured CSV and initiates a browser file download.
+ * Pairs cats with their corresponding colonies in a flat relational layout.
+ * 
+ * @param {Array} colonies - Array of colony objects to export.
+ * @param {Array} cats - Array of all cat objects.
+ */
 export function exportColoniesCSV(colonies, cats) {
   const rows = []
   
@@ -44,6 +51,12 @@ export function exportColoniesCSV(colonies, cats) {
   URL.revokeObjectURL(url)
 }
 
+/**
+ * Safely escapes double quotes, commas, and newlines in a string according to CSV format specs.
+ * 
+ * @param {string|any} str - Input value to escape.
+ * @returns {string} Escaped and formatted CSV value.
+ */
 function escapeCSV(str) {
   if (str == null) return ''
   const s = String(str)

@@ -1,3 +1,8 @@
+/**
+ * Safely escapes HTML special characters to prevent injection attacks during printable document rendering.
+ * @param {string} str - Raw input string to escape.
+ * @returns {string} Escaped string.
+ */
 function escapeHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -7,6 +12,14 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;')
 }
 
+/**
+ * Generates HTML string representing a printable clinic-ready Veterinary summary sheet.
+ * Includes information on intact cats, their colonies, genders, and custom notes.
+ * 
+ * @param {Array} cats - Array of cat objects.
+ * @param {Array} colonies - Array of colony objects.
+ * @returns {string} HTML content representing the printable document.
+ */
 export function generateVetSummary(cats, colonies) {
   // Handle both boolean false and string 'false' from database, as well as null/undefined
   const intactCats = cats.filter(c => c.neutered === false || c.neutered === 'false' || !c.neutered)
@@ -195,6 +208,13 @@ export function generateVetSummary(cats, colonies) {
   return html
 }
 
+/**
+ * Opens the veterinary summary HTML page in a new browser tab/window for printing.
+ * Uses a Revocable Object URL blob to load locally generated HTML securely.
+ * 
+ * @param {Array} cats - Array of cat objects.
+ * @param {Array} colonies - Array of colony objects.
+ */
 export function openVetSummary(cats, colonies) {
   const html = generateVetSummary(cats, colonies)
   const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), html], { type: 'text/html;charset=utf-8' })

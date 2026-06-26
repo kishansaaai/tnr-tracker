@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Custom hook to fetch all colony locations and manage real-time updates.
+ * Provides helper functions to create, update, and delete colonies.
+ * 
+ * @returns {object} Hook utilities: { colonies, loading, fetchColonies, createColony, updateColony, deleteColony }
+ */
 export function useColonies() {
   const [colonies, setColonies] = useState([])
   const [loading, setLoading] = useState(true)
@@ -60,6 +66,12 @@ export function useColonies() {
   return { colonies, loading, fetchColonies, createColony, updateColony, deleteColony }
 }
 
+/**
+ * Custom hook to fetch and manage a single colony location.
+ * 
+ * @param {string} id - UUID of the colony to fetch.
+ * @returns {object} Hook utilities: { colony, loading, fetchColony, updateColony, deleteColony }
+ */
 export function useColony(id) {
   const [colony, setColony] = useState(null)
   const [loading, setLoading] = useState(true)

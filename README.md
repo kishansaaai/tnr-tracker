@@ -2,11 +2,9 @@
 
 ![TNR Tracker](https://img.shields.io/badge/Status-Active-brightgreen) ![React](https://img.shields.io/badge/React-18-blue) ![Supabase](https://img.shields.io/badge/Supabase-Database-emerald) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8) ![Vite](https://img.shields.io/badge/Vite-Bundler-yellow)
 
-**TNR Tracker** is an ultra-modern, production-ready, highly interactive web application designed to manage and gamify **Trap-Neuter-Return (TNR)** operations at a massive global scale. 
+**TNR Tracker** is an interactive, responsive web application designed to help community cat programs log colonies, coordinate trapping, manage post-op recovery pipelines, and match rescue cats with prospective adopters.
 
-This document serves as the comprehensive technical manual, detailing every single granular feature, UI implementation, custom hook, physics engine quirk, and architectural design decision implemented in this application.
-
----
+This document serves as the technical manual, detailing features, UI implementation, custom hooks, and architectural design decisions.
 
 ## 🚀 Getting Started (Local Development)
 
@@ -217,3 +215,33 @@ Our design system prioritizes a **Modern Emerald & Glassmorphism** aesthetic.
 ---
 
 *(This manual documents the precise state of the application. It is ready for production deployment via Vercel or Netlify.)*
+
+---
+
+## 📐 7. Architecture Diagram
+
+```mermaid
+graph TD
+    User([Volunteer/Admin]) -->|Vite Dev / Vercel| WebApp[React Frontend]
+    WebApp -->|Supabase Client| Supabase[Supabase Platform]
+    
+    subgraph Supabase Backend
+        Auth[Supabase Auth]
+        DB[(PostgreSQL DB)]
+        Storage[Storage Buckets]
+        EdgeFunc[Edge Functions]
+    end
+    
+    WebApp --> Auth
+    WebApp --> DB
+    WebApp --> Storage
+    WebApp -->|Secure Requests| EdgeFunc
+    EdgeFunc -->|API Calls| Gemini[Gemini Pro Vision API]
+    EdgeFunc -->|Fallback API| CatGifs[TheCatAPI]
+```
+
+## 🤝 Contributing & Licensing
+
+- **License:** Distributed under the MIT License. See [LICENSE](file:///c:/Users/saiki/OneDrive/Documents/Desktop/tnr-tracker/LICENSE) for more details.
+- **Contributing:** Please read our [CONTRIBUTING.md](file:///c:/Users/saiki/OneDrive/Documents/Desktop/tnr-tracker/CONTRIBUTING.md) guide for details on submitting pull requests and reporting bugs.
+

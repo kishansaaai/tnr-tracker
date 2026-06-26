@@ -9,6 +9,7 @@ import { createColonyIcon, createTrapIcon } from '../components/Map/markers'
 import { ColonySidebar } from '../components/Map/ColonySidebar'
 import { AddColonyModal, AddTrapModal } from '../components/Map/AddPinModals'
 import { Button } from '../components/UI/Button'
+import { haversineDistance } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 import L from 'leaflet'
@@ -43,7 +44,11 @@ function MapBoundsController({ colonies, loading }) {
   return null
 }
 
-// Nearest-neighbor TSP approximation for route planning
+/**
+ * Optimizes trap monitoring routes using a nearest-neighbor Traveling Salesperson Problem (TSP) approximation.
+ * @param {Array} traps - Array of traps with coordinates.
+ * @returns {Array} Ordered array of traps representing the route.
+ */
 function computeRoute(traps) {
   if (traps.length <= 1) return traps
   const remaining = [...traps]
@@ -69,13 +74,6 @@ function computeRoute(traps) {
   return route
 }
 
-function haversineDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371 // km
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 function createRouteNumberIcon(number) {
   return L.divIcon({

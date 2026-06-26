@@ -10,6 +10,11 @@ export default function NetworkGraph() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+
+  useEffect(() => {
+    setActiveSearchIndex(-1)
+  }, [searchQuery])
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
@@ -40,6 +45,27 @@ export default function NetworkGraph() {
       fgRef.current.zoom(8, 2000)
     }
   }
+
+  const handleKeyDown = (e) => {
+    if (!searchResults.length) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveSearchIndex(prev => (prev + 1) % searchResults.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveSearchIndex(prev => (prev - 1 + searchResults.length) % searchResults.length)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+        handleSelectSearchResult(searchResults[activeSearchIndex])
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setIsSearchFocused(false)
+      setActiveSearchIndex(-1)
+    }
+  }
+
 
   const [expandedColonies, setExpandedColonies] = useState(new Set())
   const [isExpanding, setIsExpanding] = useState(false)
@@ -187,44 +213,54 @@ export default function NetworkGraph() {
          }}>
       
       {/* Top Banner */}
-      <div className="absolute top-4 left-4 right-4 bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl p-4 rounded-2xl flex items-center justify-between z-10 pointer-events-none">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 pointer-events-auto flex items-center gap-2">
-            <span className="animate-pulse">🟢</span> TNR Command Center
-          </h1>
-          <p className="text-xs text-gray-500 font-medium tracking-wide uppercase mt-1">Hierarchical Graph Ecosystem</p>
+      <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl p-4 rounded-2xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 z-10 pointer-events-none max-h-[90vh] overflow-y-auto lg:overflow-visible">
+        <div className="flex items-center justify-between lg:justify-start gap-4 pointer-events-auto">
+          <div>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span className="animate-pulse">🟢</span> TNR Command Center
+            </h1>
+            <p className="text-[10px] text-gray-500 font-medium tracking-wide uppercase mt-0.5">Hierarchical Graph Ecosystem</p>
+          </div>
+          {isExpanding && <span className="lg:hidden text-xs text-emerald-500 animate-pulse font-bold">Loading...</span>}
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-96 pointer-events-auto mx-4">
+        <div className="relative w-full lg:w-96 pointer-events-auto">
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
               🔍
             </span>
             <input 
               type="text" 
-              placeholder="Search colonies by name or number..." 
+              placeholder="Search colonies by name..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+              onKeyDown={handleKeyDown}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-sm transition-all shadow-sm"
             />
           </div>
           
           {isSearchFocused && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50">
-              {searchResults.map(node => (
+              {searchResults.map((node, idx) => (
                 <button
                   key={node.id}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     handleSelectSearchResult(node);
                   }}
-                  className="w-full text-left px-4 py-3 hover:bg-emerald-50 focus:bg-emerald-50 transition-colors border-b border-gray-100 last:border-0 flex items-center justify-between cursor-pointer"
+                  className={`w-full text-left px-4 py-3 transition-colors border-b border-gray-100 last:border-0 flex items-center justify-between cursor-pointer ${
+                    idx === activeSearchIndex 
+                      ? 'bg-emerald-100 text-emerald-950 font-bold border-l-4 border-emerald-500' 
+                      : 'hover:bg-emerald-50 focus:bg-emerald-50'
+                  }`}
                 >
                   <span className="font-bold text-gray-900">{node.name}</span>
-                  <span className={`text-[10px] px-2 py-1 rounded font-bold ${node.expanded ? 'bg-gray-100 text-gray-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                  <span className={`text-[10px] px-2 py-1 rounded font-bold ${
+                    node.expanded ? 'bg-gray-100 text-gray-600' : 'bg-emerald-100 text-emerald-600'
+                  }`}>
                     {node.expanded ? 'EXPANDED' : 'CLICK TO EXPAND'}
                   </span>
                 </button>
@@ -232,13 +268,13 @@ export default function NetworkGraph() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4 text-xs font-bold text-gray-600 pointer-events-auto bg-gray-50/80 p-2 rounded-lg border border-gray-200">
-          {isExpanding && <span className="text-emerald-500 animate-pulse mr-2">Fetching Local Data...</span>}
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div> Colony</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div> Volunteer</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-emerald-300 shadow-[0_0_8px_#6ee7b7]"></div> Managed Cat</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></div> Intact Cat</span>
-          <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div> Trap</span>
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 text-[10px] md:text-xs font-bold text-gray-600 pointer-events-auto bg-gray-50/80 p-2 rounded-lg border border-gray-200">
+          {isExpanding && <span className="hidden lg:inline text-emerald-500 animate-pulse mr-2">Fetching Local Data...</span>}
+          <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div> Colony</span>
+          <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div> Volunteer</span>
+          <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-300 shadow-[0_0_8px_#6ee7b7]"></div> Managed Cat</span>
+          <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></div> Intact Cat</span>
+          <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div> Trap</span>
         </div>
       </div>
       
