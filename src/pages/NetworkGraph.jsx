@@ -7,6 +7,22 @@ export default function NetworkGraph() {
   const [data, setData] = useState({ nodes: [], links: [] })
   const [loading, setLoading] = useState(true)
   const fgRef = useRef()
+  const containerRef = useRef()
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        })
+      }
+    })
+    resizeObserver.observe(containerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
 
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -317,7 +333,7 @@ export default function NetworkGraph() {
         )}
       </div>
 
-      <div className="flex-1 w-full h-full cursor-move">
+      <div ref={containerRef} className="flex-1 w-full h-full cursor-move">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-xl font-bold text-emerald-500 animate-pulse font-mono">INITIALIZING HIERARCHICAL GRAPH... 🕸️</div>
@@ -325,6 +341,8 @@ export default function NetworkGraph() {
         ) : (
           <ForceGraph2D
             ref={fgRef}
+            width={dimensions.width}
+            height={dimensions.height}
             graphData={data}
             nodeLabel="name"
             nodeRelSize={1}

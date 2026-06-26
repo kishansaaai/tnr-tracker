@@ -102,6 +102,10 @@ CREATE INDEX IF NOT EXISTS idx_traps_colony_id ON traps(colony_id);
 CREATE INDEX IF NOT EXISTS idx_cats_pipeline ON cats(pipeline_status);
 CREATE INDEX IF NOT EXISTS idx_recoveries_cat_id ON recoveries(cat_id);
 
+-- GiST Indexing for Coordinates
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE INDEX IF NOT EXISTS idx_colonies_gist_coords ON colonies USING gist (lat, lng);
+
 -- ============================================================
 -- RLS POLICIES
 -- ============================================================
@@ -280,6 +284,17 @@ CREATE POLICY "Users can upload to their own folder"
 CREATE POLICY "Users can delete their own cat photos"
   ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'cat-photos' AND owner = auth.uid());
+
+CREATE POLICY "Users can update their own cat photos"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'cat-photos' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  )
+  WITH CHECK (
+    bucket_id = 'cat-photos' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 -- Trigger to auto-create profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()

@@ -25,6 +25,7 @@ export function NotificationDropdown({ notifications, unreadCount, enabled, onTo
     <div className="relative" ref={ref}>
       <button
         onClick={() => { setOpen(!open); if (!open) onMarkAllRead() }}
+        aria-label="View notifications"
         className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,6 +47,7 @@ export function NotificationDropdown({ notifications, unreadCount, enabled, onTo
             <div className="flex items-center gap-2">
               <button
                 onClick={onToggle}
+                aria-label={enabled ? "Disable notifications" : "Enable notifications"}
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                   enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                 }`}

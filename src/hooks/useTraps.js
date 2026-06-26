@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 export function useTraps(colonyId) {
   const [traps, setTraps] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchTraps()
@@ -11,10 +12,12 @@ export function useTraps(colonyId) {
 
   async function fetchTraps() {
     setLoading(true)
+    setError(null)
     let query = supabase.from('traps').select('*, profiles:public_profiles(name)').order('created_at', { ascending: false })
     if (colonyId) query = query.eq('colony_id', colonyId)
-    const { data, error } = await query
-    if (!error) setTraps(data || [])
+    const { data, error: fetchErr } = await query
+    if (!fetchErr) setTraps(data || [])
+    else setError(fetchErr)
     setLoading(false)
   }
 
@@ -47,5 +50,5 @@ export function useTraps(colonyId) {
     setTraps(prev => prev.filter(t => t.id !== id))
   }
 
-  return { traps, loading, fetchTraps, createTrap, updateTrap, deleteTrap }
+  return { traps, loading, error, fetchTraps, createTrap, updateTrap, deleteTrap }
 }

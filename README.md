@@ -33,10 +33,13 @@ To run TNR Tracker locally, follow these steps:
    ```
 
 4. **Initialize the Database:**
+   > [!IMPORTANT]
+   > You **must** run the database scripts in the exact order specified below. Running them out of order will fail due to foreign key dependencies.
+
    Run the schema and seed files in your Supabase SQL Editor (or via CLI):
-   - `supabase/schema.sql` (Creates tables and RLS policies)
-   - `supabase/migration_v2.sql` (Applies schema updates)
-   - `supabase/seed.sql` (Populates test data)
+   1. `supabase/schema.sql` (Creates base tables and initial RLS policies)
+   2. `supabase/migration_v2.sql` (Applies schema updates, indexes, and storage policies)
+   3. `supabase/seed.sql` (Populates local test data)
 
 5. **Deploy Edge Functions:**
    Deploy the secure proxy functions locally.
@@ -73,7 +76,7 @@ To run TNR Tracker locally, follow these steps:
 
 ### Security Notice: Edge Functions & API Keys
 - **100% Server-Side Execution**: All Gemini AI and external API calls are routed through Supabase Edge Functions (`gemini-proxy` and `cat-api-proxy`). No sensitive keys are bundled into the Vite client-side JavaScript.
-- **JWT Authentication & Rate Limiting**: The Edge Functions strictly require a valid Supabase Auth JWT in the `Authorization` header. They also implement an in-memory sliding window rate limiter (e.g., 60-second cooldown per user) to protect API quotas.
+- **JWT Authentication & Rate Limiting**: The Edge Functions strictly require a valid Supabase Auth JWT in the `Authorization` header. They also implement an in-memory last-request timestamp check (60-second cooldown per user) to protect API quotas. *Note: Because cooldown state is stored in-memory in module scope, multi-instance Deno deployments can process concurrent requests across isolates without sharing state, making it a simple cooldown check rather than a global sliding window.*
 - **Strict CORS Policies**: The Edge Functions enforce strict Cross-Origin Resource Sharing, accepting requests exclusively from the designated frontend domain.
 
 ---

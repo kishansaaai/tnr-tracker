@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase'
 export function useCats(colonyId) {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (colonyId) fetchCats()
@@ -19,13 +20,14 @@ export function useCats(colonyId) {
 
   async function fetchCats() {
     setLoading(true)
+    setError(null)
     let query = supabase.from('cats').select('*').order('created_at', { ascending: false })
     if (colonyId) query = query.eq('colony_id', colonyId)
-    const { data, error } = await query
-    if (!error) setCats(data || [])
+    const { data, error: fetchErr } = await query
+    if (!fetchErr) setCats(data || [])
+    else setError(fetchErr)
     setLoading(false)
   }
-
 
   async function addCat(catData) {
     const { data, error } = await supabase
@@ -77,7 +79,7 @@ export function useCats(colonyId) {
     return data.publicUrl
   }
 
-  return { cats, loading, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto }
+  return { cats, loading, error, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto }
 }
 
 /**
@@ -89,14 +91,21 @@ export function useCats(colonyId) {
 export function useAllCats() {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchAllCats()
     
     const channel = supabase
       .channel('cats-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cats' }, () => {
-        fetchAllCats()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cats' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setCats(prev => [payload.new, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+          setCats(prev => prev.map(c => c.id === payload.new.id ? payload.new : c))
+        } else if (payload.eventType === 'DELETE') {
+          setCats(prev => prev.filter(c => c.id !== payload.old.id))
+        }
       })
       .subscribe()
 
@@ -105,13 +114,15 @@ export function useAllCats() {
 
   async function fetchAllCats() {
     setLoading(true)
-    const { data, error } = await supabase
+    setError(null)
+    const { data, error: fetchErr } = await supabase
       .from('cats')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!error) setCats(data || [])
+    if (!fetchErr) setCats(data || [])
+    else setError(fetchErr)
     setLoading(false)
   }
 
-  return { cats, loading, fetchAllCats }
+  return { cats, loading, error, fetchAllCats }
 }

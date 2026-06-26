@@ -150,6 +150,7 @@ export function RecoveryCard({ recovery, onRelease, onAddMed, onMarkMed, onDelet
                   <button
                     onClick={() => onMarkMed(med.id, !med.completed)}
                     disabled={isReleased}
+                    aria-label={med.completed ? `Mark ${med.name} as incomplete` : `Mark ${med.name} as completed`}
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       med.completed
                         ? 'bg-green-500 border-green-500 text-white'
@@ -179,7 +180,7 @@ export function RecoveryCard({ recovery, onRelease, onAddMed, onMarkMed, onDelet
             <Button size="xs" className="flex-1" onClick={() => onRelease(recovery.id)}>
               ✅ Release Cat
             </Button>
-            <Button size="xs" variant="danger" onClick={() => onDelete(recovery.id)}>
+            <Button size="xs" variant="danger" onClick={() => onDelete(recovery.id)} aria-label="Delete recovery record">
               🗑️
             </Button>
           </div>

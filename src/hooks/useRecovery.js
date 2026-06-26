@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 export function useRecoveries() {
   const [recoveries, setRecoveries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchRecoveries()
@@ -11,11 +12,13 @@ export function useRecoveries() {
 
   async function fetchRecoveries() {
     setLoading(true)
-    const { data, error } = await supabase
+    setError(null)
+    const { data, error: fetchErr } = await supabase
       .from('recoveries')
       .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
       .order('created_at', { ascending: false })
-    if (!error) setRecoveries(data || [])
+    if (!fetchErr) setRecoveries(data || [])
+    else setError(fetchErr)
     setLoading(false)
   }
 
@@ -94,6 +97,7 @@ export function useRecoveries() {
     recoveries,
     activeRecoveries,
     loading,
+    error,
     fetchRecoveries,
     createRecovery,
     updateRecovery,

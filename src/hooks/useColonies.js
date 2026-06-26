@@ -10,14 +10,21 @@ import { supabase } from '../lib/supabase'
 export function useColonies() {
   const [colonies, setColonies] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchColonies()
     
     const channel = supabase
       .channel('colonies-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'colonies' }, () => {
-        fetchColonies()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colonies' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setColonies(prev => [payload.new, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+          setColonies(prev => prev.map(c => c.id === payload.new.id ? payload.new : c))
+        } else if (payload.eventType === 'DELETE') {
+          setColonies(prev => prev.filter(c => c.id !== payload.old.id))
+        }
       })
       .subscribe()
 
@@ -26,11 +33,13 @@ export function useColonies() {
 
   async function fetchColonies() {
     setLoading(true)
-    const { data, error } = await supabase
+    setError(null)
+    const { data, error: fetchErr } = await supabase
       .from('colonies')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!error) setColonies(data || [])
+    if (!fetchErr) setColonies(data || [])
+    else setError(fetchErr)
     setLoading(false)
   }
 
@@ -63,7 +72,7 @@ export function useColonies() {
     setColonies(prev => prev.filter(c => c.id !== id))
   }
 
-  return { colonies, loading, fetchColonies, createColony, updateColony, deleteColony }
+  return { colonies, loading, error, fetchColonies, createColony, updateColony, deleteColony }
 }
 
 /**
@@ -75,6 +84,7 @@ export function useColonies() {
 export function useColony(id) {
   const [colony, setColony] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     if (!id) return
@@ -83,12 +93,14 @@ export function useColony(id) {
 
   async function fetchColony() {
     setLoading(true)
-    const { data, error } = await supabase
+    setError(null)
+    const { data, error: fetchErr } = await supabase
       .from('colonies')
       .select('*')
       .eq('id', id)
       .single()
-    if (!error) setColony(data)
+    if (!fetchErr) setColony(data)
+    else setError(fetchErr)
     setLoading(false)
   }
 
@@ -109,5 +121,5 @@ export function useColony(id) {
     if (error) throw error
   }
 
-  return { colony, loading, fetchColony, updateColony, deleteColony }
+  return { colony, loading, error, fetchColony, updateColony, deleteColony }
 }

@@ -98,3 +98,23 @@ CREATE POLICY "Users can read own profile, admins read all"
   
 ALTER TABLE updates DROP CONSTRAINT IF EXISTS updates_message_check;
 ALTER TABLE updates ADD CONSTRAINT updates_message_check CHECK (message !~ '<[^>]+>');
+
+-- ============================================================
+-- Post-Evaluation Security & Performance Fixes
+-- ============================================================
+
+-- GiST Indexing for Coordinates
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE INDEX IF NOT EXISTS idx_colonies_gist_coords ON colonies USING gist (lat, lng);
+
+-- Storage UPDATE RLS Policy
+CREATE POLICY "Users can update their own cat photos"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
+    bucket_id = 'cat-photos' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  )
+  WITH CHECK (
+    bucket_id = 'cat-photos' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );

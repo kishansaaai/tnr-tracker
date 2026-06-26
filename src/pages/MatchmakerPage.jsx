@@ -129,7 +129,9 @@ export default function MatchmakerPage() {
         const socialDist = Math.abs(petsAnswer - catSocial)
         const activityDist = Math.abs(activityAnswer - catAffection)
         
-        const currentScore = 10 - (energyDist + socialDist + activityDist)
+        const totalDist = energyDist + socialDist + activityDist
+        // Normalize score: 0 distance -> 10/10, max distance (6) -> 0/10 compatibility
+        const currentScore = Math.round(((6 - totalDist) / 6) * 10)
 
         if (currentScore > highestScore) {
           highestScore = currentScore
@@ -174,7 +176,6 @@ export default function MatchmakerPage() {
                 setAnswers(prev => {
                   const updated = { ...prev }
                   delete updated[questions[currentStep].id]
-                  delete updated[questions[prevStep].id]
                   return updated
                 })
                 setCurrentStep(prevStep)
@@ -186,15 +187,22 @@ export default function MatchmakerPage() {
           )}
 
           <div className="space-y-4">
-            {questions[currentStep].options.map(option => (
-              <button
-                key={option.id}
-                onClick={() => handleAnswer(questions[currentStep].id, option.score)}
-                className="w-full text-left p-4 rounded-xl border-2 border-rose-50 hover:border-rose-400 hover:bg-rose-50 transition-all font-medium text-gray-700 hover:text-rose-900 active:scale-95"
-              >
-                {option.label}
-              </button>
-            ))}
+            {questions[currentStep].options.map(option => {
+              const isSelected = answers[questions[currentStep].id] === option.score
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => handleAnswer(questions[currentStep].id, option.score)}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium active:scale-95 ${
+                    isSelected
+                      ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-sm'
+                      : 'border-rose-50 hover:border-rose-400 hover:bg-rose-50 text-gray-700 hover:text-rose-900'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}

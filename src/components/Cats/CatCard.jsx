@@ -30,6 +30,7 @@ export function CatCard({ cat, onDelete, isAdmin }) {
           {isAdmin && (
             <button
               onClick={() => setShowDelete(!showDelete)}
+              aria-label="Toggle remove cat prompt"
               className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
