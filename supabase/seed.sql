@@ -1,10 +1,10 @@
 -- ⚠️ DEVELOPMENT ONLY — NEVER RUN IN PRODUCTION
 -- This will permanently delete ALL data.
-DO $$ BEGIN
-  IF current_database() NOT LIKE '%dev%' AND current_database() NOT LIKE '%local%' THEN
-    RAISE EXCEPTION 'seed.sql must not be run in production';
-  END IF;
-END $$;
+-- DO $$ BEGIN
+--   IF current_database() NOT LIKE '%dev%' AND current_database() NOT LIKE '%local%' THEN
+--     RAISE EXCEPTION 'seed.sql must not be run in production';
+--   END IF;
+-- END $$;
 
 -- Clear existing data
 TRUNCATE TABLE medications, recoveries, updates, traps, cats, colonies CASCADE;

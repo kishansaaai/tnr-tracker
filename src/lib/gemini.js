@@ -2,11 +2,26 @@ import { supabase } from './supabase'
 
 export async function analyseColonyHealth({ colony, cats, updates }) {
   const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-    body: { colony, cats, updates }
+    body: { action: 'health_report', colony, cats, updates }
   })
 
   if (error) {
-    throw new Error(error.message || 'Failed to fetch analysis from Edge Function.')
+    let msg = error.message || 'Failed to fetch analysis from Edge Function.'
+    if (error.context) {
+      try {
+        // Parse JSON error response if possible
+        const body = await error.context.clone().json()
+        if (body?.error) {
+          msg = body.error
+        }
+      } catch (e) {
+        try {
+          const text = await error.context.clone().text()
+          if (text) msg = text
+        } catch (t_err) {}
+      }
+    }
+    throw new Error(msg)
   }
 
   if (!data?.text) {

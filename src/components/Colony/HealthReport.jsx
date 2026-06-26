@@ -34,19 +34,20 @@ function formatContent(text, color) {
   return (
     <div className="space-y-3 mt-1">
       {lines.map((line, idx) => {
+        const hasIndent = line.startsWith(' ') || line.startsWith('\t')
         const trimmed = line.trim()
         if (!trimmed) return null
 
         // Match numbered lists: "1. **Title:** text" or "1. text"
         const numListMatch = trimmed.match(/^(\d+)\.\s+(.*)$/)
         // Match bullet lists: "- **Title:** text" or "* text"
-        const bulletListMatch = trimmed.match(/^[-*]\s+(.*)$/)
+        const bulletListMatch = trimmed.match(/^[-*•]\s+(.*)$/)
 
         if (numListMatch) {
           const num = numListMatch[1]
           const content = numListMatch[2]
           return (
-            <div key={idx} className="flex gap-3 items-start pl-1">
+            <div key={idx} className={`flex gap-3 items-start pl-1 ${hasIndent ? 'pl-9' : ''}`}>
               <span className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mt-0.5 shadow-sm ${classes.bg}`}>
                 {num}
               </span>
@@ -60,8 +61,8 @@ function formatContent(text, color) {
         if (bulletListMatch) {
           const content = bulletListMatch[1]
           return (
-            <div key={idx} className="flex gap-3 items-start pl-1">
-              <span className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${classes.bullet}`} />
+            <div key={idx} className={`flex gap-3 items-start pl-1 ${hasIndent ? 'pl-9' : ''}`}>
+              <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mt-2.5 ${classes.bullet}`} />
               <div className="text-sm text-gray-700 leading-relaxed flex-1">
                 {renderBoldText(content)}
               </div>
@@ -70,7 +71,7 @@ function formatContent(text, color) {
         }
 
         return (
-          <p key={idx} className="text-sm text-gray-700 leading-relaxed">
+          <p key={idx} className={`text-sm text-gray-700 leading-relaxed ${hasIndent ? 'pl-9' : ''}`}>
             {renderBoldText(trimmed)}
           </p>
         )
@@ -91,7 +92,7 @@ export function HealthReport({ colony, cats, updates }) {
       const raw = await analyseColonyHealth({ colony, cats, updates })
       setReport(parseHealthReport(raw))
     } catch (e) {
-      setError(friendlyError(e))
+      setError(e.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }

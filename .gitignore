@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+
+# Supabase and scratch files
+.supabase/
+supabase/.temp/
+scratch/

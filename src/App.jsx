@@ -15,6 +15,7 @@ const AdoptionPage = React.lazy(() => import('./pages/AdoptionPage'))
 const MatchmakerPage = React.lazy(() => import('./pages/MatchmakerPage'))
 const MapPage = React.lazy(() => import('./pages/MapPage'))
 const NetworkGraph = React.lazy(() => import('./pages/NetworkGraph'))
+const LandingPage = React.lazy(() => import('./pages/LandingPage'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -56,18 +57,26 @@ function AppRoutes() {
         </ErrorBoundary>
       } />
       <Route path="/" element={
-        <ProtectedRoute>
-          <div className="flex flex-col h-screen">
-            <Navbar />
-            <div className="flex-1 overflow-hidden">
-              <ErrorBoundary>
-                <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
-                  <MapPage />
-                </Suspense>
-              </ErrorBoundary>
+        user ? (
+          <ProtectedRoute>
+            <div className="flex flex-col h-screen">
+              <Navbar />
+              <div className="flex-1 overflow-hidden">
+                <ErrorBoundary>
+                  <Suspense fallback={<div className="h-full flex items-center justify-center"><PawLoader /></div>}>
+                    <MapPage />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
-          </div>
-        </ProtectedRoute>
+          </ProtectedRoute>
+        ) : (
+          <ErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+              <LandingPage />
+            </Suspense>
+          </ErrorBoundary>
+        )
       } />
       <Route path="/colony/:id" element={
         <ProtectedRoute>

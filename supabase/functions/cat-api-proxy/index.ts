@@ -4,23 +4,6 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 const CAT_API_KEY = Deno.env.get('CAT_API_KEY')
 const BASE_URL = 'https://api.thecatapi.com/v1'
 
-if (!CAT_API_KEY) {
-  Deno.serve((req) => {
-    const origin = req.headers.get('Origin') || ''
-    const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1')
-    const allowedOrigin = isLocal ? origin : 'https://tnr-tracker.vercel.app'
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': allowedOrigin,
-      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    }
-    if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders })
-    }
-    return new Response(
-      JSON.stringify({ error: 'Server misconfiguration: CAT_API_KEY not set' }),
-      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    )
-  })
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
