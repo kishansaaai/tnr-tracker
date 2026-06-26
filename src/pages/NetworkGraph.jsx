@@ -9,6 +9,16 @@ export default function NetworkGraph() {
   const fgRef = useRef()
   const containerRef = useRef()
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [showCanvasMobile, setShowCanvasMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -221,6 +231,135 @@ export default function NetworkGraph() {
 
   const [selectedNode, setSelectedNode] = useState(null)
 
+  const coloniesList = useMemo(() => {
+    return data.nodes.filter(n => n.group === 'Colony')
+  }, [data.nodes])
+
+  const filteredColonies = useMemo(() => {
+    if (!searchQuery.trim()) return coloniesList
+    return coloniesList.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [searchQuery, coloniesList])
+
+  if (isMobile && !showCanvasMobile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col p-4">
+        {/* Banner */}
+        <div className="bg-white border border-gray-200 shadow-sm p-4 rounded-2xl mb-4">
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <span>🟢</span> TNR Command Center
+          </h1>
+          <p className="text-[10px] text-gray-500 font-medium tracking-wide uppercase mt-0.5">Mobile List View</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            🔍
+          </span>
+          <input 
+            type="text" 
+            placeholder="Search colonies by name..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition-all shadow-sm"
+            aria-label="Search colonies by name"
+          />
+        </div>
+
+        {/* View Graph Toggle */}
+        <button
+          onClick={() => setShowCanvasMobile(true)}
+          className="mb-4 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+          aria-label="Toggle full screen graph view"
+        >
+          <span>🕸️</span> View Interactive Graph
+        </button>
+
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center py-20">
+            <div className="text-sm font-bold text-emerald-600 animate-pulse">Loading command center data...</div>
+          </div>
+        ) : (
+          <div className="space-y-3 flex-1 overflow-y-auto">
+            {filteredColonies.length === 0 ? (
+              <p className="text-center text-gray-500 py-10 italic text-sm">No colonies found matching your search</p>
+            ) : (
+              filteredColonies.map(colonyNode => {
+                const neighbors = colonyNode.neighbors || []
+                const catCount = neighbors.filter(n => n.group === 'Cat').length
+                const trapCount = neighbors.filter(n => n.group === 'Trap').length
+
+                return (
+                  <div key={colonyNode.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">{colonyNode.name}</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {catCount} cats logged • {trapCount} traps active
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            if (!colonyNode.expanded) {
+                              expandColony(colonyNode)
+                            }
+                          }}
+                          disabled={colonyNode.expanded || isExpanding}
+                          className={`text-xs px-2.5 py-1.5 rounded-lg font-semibold border transition-all ${
+                            colonyNode.expanded 
+                              ? 'bg-gray-50 text-gray-400 border-gray-200' 
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                          aria-label={`Expand details for ${colonyNode.name}`}
+                        >
+                          {colonyNode.expanded ? 'Expanded' : 'Load Data'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedNode(colonyNode)
+                            if (!colonyNode.expanded) {
+                              expandColony(colonyNode)
+                            }
+                            setShowCanvasMobile(true)
+                          }}
+                          className="text-xs px-2.5 py-1.5 rounded-lg font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                          aria-label={`View ${colonyNode.name} on graph`}
+                        >
+                          Graph
+                        </button>
+                      </div>
+                    </div>
+
+                    {colonyNode.expanded && neighbors.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Connected Entities</p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {neighbors.map(n => {
+                            let icon = '⚪'
+                            if (n.group === 'Cat') icon = '🐈'
+                            if (n.group === 'Trap') icon = '🪤'
+                            if (n.group === 'Volunteer') icon = '👤'
+                            return (
+                              <div key={n.id} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                <span className="font-medium text-gray-700">{icon} {n.name}</span>
+                                <span className="text-[9px] font-bold text-gray-400 uppercase">{n.group}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="h-full w-full bg-white flex flex-col relative overflow-hidden" 
          style={{
@@ -228,6 +367,16 @@ export default function NetworkGraph() {
            backgroundSize: '40px 40px'
          }}>
       
+      {isMobile && showCanvasMobile && (
+        <button
+          onClick={() => setShowCanvasMobile(false)}
+          className="absolute top-4 right-4 bg-gray-900 hover:bg-gray-800 text-white font-bold px-4 py-2.5 rounded-xl shadow-xl z-[99] text-xs transition-all flex items-center gap-1 cursor-pointer"
+          aria-label="Return to colony list view"
+        >
+          ✕ Close Graph View
+        </button>
+      )}
+
       {/* Top Banner */}
       <div className="absolute top-4 left-4 right-4 bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl p-4 rounded-2xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 z-10 pointer-events-none max-h-[90vh] overflow-y-auto lg:overflow-visible">
         <div className="flex items-center justify-between lg:justify-start gap-4 pointer-events-auto">
@@ -255,6 +404,7 @@ export default function NetworkGraph() {
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onKeyDown={handleKeyDown}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white text-sm transition-all shadow-sm"
+              aria-label="Search colonies by name in graph view"
             />
           </div>
           

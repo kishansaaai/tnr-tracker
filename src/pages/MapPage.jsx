@@ -9,7 +9,7 @@ import { createColonyIcon, createTrapIcon } from '../components/Map/markers'
 import { ColonySidebar } from '../components/Map/ColonySidebar'
 import { AddColonyModal, AddTrapModal } from '../components/Map/AddPinModals'
 import { Button } from '../components/UI/Button'
-import { haversineDistance } from '../lib/utils'
+import { haversineDistance, computeRoute } from '../lib/utils'
 import toast from 'react-hot-toast'
 
 import L from 'leaflet'
@@ -42,36 +42,6 @@ function MapBoundsController({ colonies, loading }) {
     }
   }, [colonies, loading, map])
   return null
-}
-
-/**
- * Optimizes trap monitoring routes using a nearest-neighbor Traveling Salesperson Problem (TSP) approximation.
- * @param {Array} traps - Array of traps with coordinates.
- * @returns {Array} Ordered array of traps representing the route.
- */
-function computeRoute(traps) {
-  if (traps.length <= 1) return traps
-  const remaining = [...traps]
-  const route = [remaining.shift()]
-
-  while (remaining.length > 0) {
-    const last = route[route.length - 1]
-    let nearest = 0
-    let nearestDist = Infinity
-
-    for (let i = 0; i < remaining.length; i++) {
-      const dist = Math.sqrt(
-        Math.pow(last.lat - remaining[i].lat, 2) +
-        Math.pow(last.lng - remaining[i].lng, 2)
-      )
-      if (dist < nearestDist) {
-        nearestDist = dist
-        nearest = i
-      }
-    }
-    route.push(remaining.splice(nearest, 1)[0])
-  }
-  return route
 }
 
 

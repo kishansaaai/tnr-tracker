@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAllCats } from '../hooks/useCats'
 import { useColonies } from '../hooks/useColonies'
-import { supabase } from '../lib/supabase'
 import { Badge } from '../components/UI/Badge'
-import { Button } from '../components/UI/Button'
-import { CardSkeleton } from '../components/UI/Skeleton'
 import toast from 'react-hot-toast'
-import { friendlyError } from '../lib/utils'
 
 const PIPELINE_STAGES = [
   { id: 'tnr', label: 'TNR (Return)', icon: '🔄', color: 'bg-gray-50 border-gray-200' },
@@ -39,6 +34,7 @@ function PipelineCatCard({ cat, colonies, onMove, stages }) {
         <button
           onClick={() => setShowMove(!showMove)}
           className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label={`Move ${cat.name || 'unnamed cat'} in pipeline`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -68,6 +64,7 @@ function PipelineCatCard({ cat, colonies, onMove, stages }) {
               key={stage.id}
               onClick={() => { onMove(cat.id, stage.id); setShowMove(false) }}
               className="w-full text-left text-xs px-2 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-colors"
+              aria-label={`Move cat to ${stage.label}`}
             >
               <span>{stage.icon}</span>
               <span>{stage.label}</span>
@@ -80,13 +77,19 @@ function PipelineCatCard({ cat, colonies, onMove, stages }) {
 }
 
 export default function AdoptionPage() {
-  const { cats, loading, fetchAllCats } = useAllCats()
+  const { cats, loading, updateCat, error } = useAllCats()
   const { colonies } = useColonies()
+  const [filterColony, setFilterColony] = useState('')
+  const [visibleCounts, setVisibleCounts] = useState({
+    tnr: 10,
+    socializing: 10,
+    adoption_ready: 10,
+    adopted: 10,
+  })
 
   useEffect(() => {
     document.title = 'TNR Tracker — Adoption Pipeline'
   }, [])
-  const [filterColony, setFilterColony] = useState('')
 
   const filteredCats = filterColony
     ? cats.filter(c => c.colony_id === filterColony)
@@ -98,13 +101,8 @@ export default function AdoptionPage() {
       if (newStatus === 'adopted') {
         updates.adoption_date = new Date().toISOString()
       }
-      const { error } = await supabase
-        .from('cats')
-        .update(updates)
-        .eq('id', catId)
-      if (error) throw error
+      await updateCat(catId, updates)
       toast.success(`Cat moved to ${PIPELINE_STAGES.find(s => s.id === newStatus)?.label}`)
-      fetchAllCats()
     } catch (err) {
       toast.error(err.message)
     }
@@ -129,6 +127,7 @@ export default function AdoptionPage() {
             value={filterColony}
             onChange={e => setFilterColony(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            aria-label="Filter pipeline by colony"
           >
             <option value="">All Colonies</option>
             {colonies.map(c => (
@@ -149,39 +148,60 @@ export default function AdoptionPage() {
         ))}
       </div>
 
+      {error && (
+        <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 mb-6 text-sm">
+          Failed to load adoption data: {error.message || 'Unknown error'}
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <CardSkeleton key={i} />)}
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="animate-pulse bg-gray-100 h-64 rounded-2xl" />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {PIPELINE_STAGES.map(stage => {
             const stageCats = filteredCats.filter(c => (c.pipeline_status || 'tnr') === stage.id)
+            const visibleCats = stageCats.slice(0, visibleCounts[stage.id])
 
             return (
-              <div key={stage.id} className={`rounded-2xl border-2 border-dashed p-3 min-h-[300px] ${stage.color}`}>
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/50">
-                  <span className="text-lg">{stage.icon}</span>
-                  <h3 className="font-semibold text-gray-800 text-sm">{stage.label}</h3>
-                  <span className="ml-auto bg-white/80 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                    {stageCats.length}
-                  </span>
+              <div key={stage.id} className={`rounded-2xl border-2 border-dashed p-3 min-h-[300px] flex flex-col justify-between ${stage.color}`}>
+                <div>
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/50">
+                    <span className="text-lg">{stage.icon}</span>
+                    <h3 className="font-semibold text-gray-800 text-sm">{stage.label}</h3>
+                    <span className="ml-auto bg-white/80 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                      {stageCats.length}
+                    </span>
+                  </div>
+
+                  {stageCats.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-8 italic">No cats in this stage</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {visibleCats.map(cat => (
+                        <PipelineCatCard
+                          key={cat.id}
+                          cat={cat}
+                          colonies={colonies}
+                          onMove={handleMoveCat}
+                          stages={PIPELINE_STAGES}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {stageCats.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-8 italic">No cats in this stage</p>
-                ) : (
-                  <div className="space-y-2">
-                    {stageCats.map(cat => (
-                      <PipelineCatCard
-                        key={cat.id}
-                        cat={cat}
-                        colonies={colonies}
-                        onMove={handleMoveCat}
-                        stages={PIPELINE_STAGES}
-                      />
-                    ))}
-                  </div>
+                {stageCats.length > visibleCounts[stage.id] && (
+                  <button
+                    onClick={() => setVisibleCounts(prev => ({ ...prev, [stage.id]: prev[stage.id] + 10 }))}
+                    className="w-full py-1.5 text-xs text-green-700 hover:text-green-800 bg-white hover:bg-green-50 border border-green-200 rounded-lg font-medium transition-colors mt-3"
+                    aria-label={`Load more cats for ${stage.label}`}
+                  >
+                    Load More
+                  </button>
                 )}
               </div>
             )

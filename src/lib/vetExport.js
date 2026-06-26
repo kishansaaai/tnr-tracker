@@ -3,7 +3,7 @@
  * @param {string} str - Raw input string to escape.
  * @returns {string} Escaped string.
  */
-function escapeHtml(str) {
+export function escapeHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

@@ -35,6 +35,7 @@ export default function ColonyDetail() {
   const [showAddCat, setShowAddCat] = useState(false)
   const [isFeeding, setIsFeeding] = useState(false)
   const [showTNR, setShowTNR] = useState(false)
+  const [visibleCatsCount, setVisibleCatsCount] = useState(10)
 
   const neuteredCount = cats.filter(cat => cat.neutered).length
   const neuteredPct = cats.length > 0 ? Math.round((neuteredCount / cats.length) * 100) : 0
@@ -174,8 +175,8 @@ export default function ColonyDetail() {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
             />
             <div className="flex gap-3">
-              <Button type="submit" size="sm">Save changes</Button>
-              <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+              <Button type="submit" size="sm" aria-label="Save colony changes">Save changes</Button>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(false)} aria-label="Cancel editing colony">Cancel</Button>
             </div>
           </form>
         ) : (
@@ -198,6 +199,7 @@ export default function ColonyDetail() {
                   size="sm" 
                   onClick={handleFeedColony}
                   className="bg-blue-500 hover:bg-blue-600 text-white border-blue-600 shadow-sm transition-transform active:scale-95"
+                  aria-label="Feed colony"
                 >
                   Feed Colony 🐟
                 </Button>
@@ -210,6 +212,7 @@ export default function ColonyDetail() {
                         setEditForm(colony)
                         setEditing(true)
                       }}
+                      aria-label="Edit colony details"
                     >
                       Edit
                     </Button>
@@ -217,6 +220,7 @@ export default function ColonyDetail() {
                       variant="danger"
                       size="sm"
                       onClick={handleDeleteColony}
+                      aria-label="Delete colony"
                     >
                       Delete
                     </Button>
@@ -283,10 +287,10 @@ export default function ColonyDetail() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">Cat Roster</h2>
               <div className="flex gap-2">
-                <Button size="sm" variant="secondary" onClick={() => openVetSummary(cats, [colony])}>
+                <Button size="sm" variant="secondary" onClick={() => openVetSummary(cats, [colony])} aria-label="Export colony data for veterinarian">
                   🏥 Vet Export
                 </Button>
-                <Button size="sm" onClick={() => setShowAddCat(!showAddCat)}>
+                <Button size="sm" onClick={() => setShowAddCat(!showAddCat)} aria-label={showAddCat ? 'Cancel logging cat' : 'Log a new cat to this colony'}>
                   {showAddCat ? 'Cancel' : '+ Log Cat'}
                 </Button>
               </div>
@@ -314,9 +318,21 @@ export default function ColonyDetail() {
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {cats.map(cat => (
+                {cats.slice(0, visibleCatsCount).map(cat => (
                   <CatCard key={cat.id} cat={cat} onDelete={handleDeleteCat} isAdmin={isAdmin} />
                 ))}
+                {cats.length > visibleCatsCount && (
+                  <div className="sm:col-span-2 flex justify-center mt-4">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setVisibleCatsCount(prev => prev + 10)}
+                      aria-label="Load more cats in roster"
+                    >
+                      Load More Cats
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

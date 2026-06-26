@@ -55,9 +55,12 @@ Deno.serve(async (req) => {
       endpoint = `${BASE_URL}/images/search?mime_types=gif`
     }
 
-    const headers: Record<string, string> = {}
-    if (CAT_API_KEY) {
-      headers['x-api-key'] = CAT_API_KEY
+    if (!CAT_API_KEY) {
+      throw new Error("Missing CAT_API_KEY configuration in server environment.")
+    }
+
+    const headers: Record<string, string> = {
+      'x-api-key': CAT_API_KEY
     }
 
     const res = await fetch(endpoint, { headers })

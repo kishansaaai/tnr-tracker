@@ -4,8 +4,9 @@ import { supabase } from '../lib/supabase'
 /**
  * Custom hook to fetch all colony locations and manage real-time updates.
  * Provides helper functions to create, update, and delete colonies.
+ * Uses realtime updates as the single source of truth for local state updates.
  * 
- * @returns {object} Hook utilities: { colonies, loading, fetchColonies, createColony, updateColony, deleteColony }
+ * @returns {object} Hook utilities: { colonies, loading, error, fetchColonies, createColony, updateColony, deleteColony }
  */
 export function useColonies() {
   const [colonies, setColonies] = useState([])
@@ -50,7 +51,6 @@ export function useColonies() {
       .select()
       .single()
     if (error) throw error
-    setColonies(prev => [data, ...prev])
     return data
   }
 
@@ -62,14 +62,12 @@ export function useColonies() {
       .select()
       .single()
     if (error) throw error
-    setColonies(prev => prev.map(c => c.id === id ? data : c))
     return data
   }
 
   async function deleteColony(id) {
     const { error } = await supabase.from('colonies').delete().eq('id', id)
     if (error) throw error
-    setColonies(prev => prev.filter(c => c.id !== id))
   }
 
   return { colonies, loading, error, fetchColonies, createColony, updateColony, deleteColony }
@@ -77,9 +75,10 @@ export function useColonies() {
 
 /**
  * Custom hook to fetch and manage a single colony location.
+ * Uses realtime updates as the single source of truth for incremental updates.
  * 
  * @param {string} id - UUID of the colony to fetch.
- * @returns {object} Hook utilities: { colony, loading, fetchColony, updateColony, deleteColony }
+ * @returns {object} Hook utilities: { colony, loading, error, fetchColony, updateColony, deleteColony }
  */
 export function useColony(id) {
   const [colony, setColony] = useState(null)
@@ -89,6 +88,19 @@ export function useColony(id) {
   useEffect(() => {
     if (!id) return
     fetchColony()
+
+    const channel = supabase
+      .channel(`colony-single-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colonies', filter: `id=eq.${id}` }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          setColony(null)
+        } else {
+          setColony(payload.new)
+        }
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [id])
 
   async function fetchColony() {
@@ -112,7 +124,6 @@ export function useColony(id) {
       .select()
       .single()
     if (error) throw error
-    setColony(data)
     return data
   }
 

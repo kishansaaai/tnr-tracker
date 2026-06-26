@@ -28,3 +28,32 @@ export function haversineDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+export function sanitizeForPrompt(str) {
+  return String(str || '').replace(/[`<>]/g, '').slice(0, 500)
+}
+
+export function computeRoute(traps) {
+  if (traps.length <= 1) return traps
+  const remaining = [...traps]
+  const route = [remaining.shift()]
+
+  while (remaining.length > 0) {
+    const last = route[route.length - 1]
+    let nearest = 0
+    let nearestDist = Infinity
+
+    for (let i = 0; i < remaining.length; i++) {
+      const dist = Math.sqrt(
+        Math.pow(last.lat - remaining[i].lat, 2) +
+        Math.pow(last.lng - remaining[i].lng, 2)
+      )
+      if (dist < nearestDist) {
+        nearestDist = dist
+        nearest = i
+      }
+    }
+    route.push(remaining.splice(nearest, 1)[0])
+  }
+  return route
+}
+

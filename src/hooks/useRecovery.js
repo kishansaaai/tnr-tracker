@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Custom hook to fetch and manage veterinary recovery records and associated medications.
+ * Uses realtime subscriptions as the single source of truth for incremental state updates.
+ * Exposes a standard error state.
+ * 
+ * @returns {object} Hook utilities: { recoveries, activeRecoveries, loading, error, fetchRecoveries, createRecovery, updateRecovery, deleteRecovery, addMedication, updateMedication, deleteMedication }
+ */
 export function useRecoveries() {
   const [recoveries, setRecoveries] = useState([])
   const [loading, setLoading] = useState(true)
@@ -8,7 +15,54 @@ export function useRecoveries() {
 
   useEffect(() => {
     fetchRecoveries()
+
+    const channel = supabase
+      .channel('recoveries-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'recoveries' }, (payload) => {
+        handleRealtimeEvent(payload)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'medications' }, (payload) => {
+        handleMedicationRealtimeEvent(payload)
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [])
+
+  async function handleRealtimeEvent(payload) {
+    if (payload.eventType === 'DELETE') {
+      setRecoveries(prev => prev.filter(r => r.id !== payload.old.id))
+      return
+    }
+    const { data, error } = await supabase
+      .from('recoveries')
+      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
+      .eq('id', payload.new.id)
+      .single()
+    if (!error && data) {
+      if (payload.eventType === 'INSERT') {
+        setRecoveries(prev => [data, ...prev])
+      } else if (payload.eventType === 'UPDATE') {
+        setRecoveries(prev => prev.map(r => r.id === data.id ? data : r))
+      }
+    }
+  }
+
+  async function handleMedicationRealtimeEvent(payload) {
+    const recoveryId = payload.eventType === 'DELETE' ? payload.old.recovery_id : payload.new.recovery_id
+    if (!recoveryId) {
+      fetchRecoveries()
+      return
+    }
+    const { data, error } = await supabase
+      .from('recoveries')
+      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
+      .eq('id', recoveryId)
+      .single()
+    if (!error && data) {
+      setRecoveries(prev => prev.map(r => r.id === recoveryId ? data : r))
+    }
+  }
 
   async function fetchRecoveries() {
     setLoading(true)
@@ -26,10 +80,9 @@ export function useRecoveries() {
     const { data, error } = await supabase
       .from('recoveries')
       .insert(recoveryData)
-      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
+      .select()
       .single()
     if (error) throw error
-    setRecoveries(prev => [data, ...prev])
     return data
   }
 
@@ -38,17 +91,15 @@ export function useRecoveries() {
       .from('recoveries')
       .update(updates)
       .eq('id', id)
-      .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
+      .select()
       .single()
     if (error) throw error
-    setRecoveries(prev => prev.map(r => r.id === id ? data : r))
     return data
   }
 
   async function deleteRecovery(id) {
     const { error } = await supabase.from('recoveries').delete().eq('id', id)
     if (error) throw error
-    setRecoveries(prev => prev.filter(r => r.id !== id))
   }
 
   async function addMedication(medData) {
@@ -58,12 +109,6 @@ export function useRecoveries() {
       .select()
       .single()
     if (error) throw error
-    setRecoveries(prev => prev.map(r => {
-      if (r.id === medData.recovery_id) {
-        return { ...r, medications: [...(r.medications || []), data] }
-      }
-      return r
-    }))
     return data
   }
 
@@ -75,20 +120,12 @@ export function useRecoveries() {
       .select()
       .single()
     if (error) throw error
-    setRecoveries(prev => prev.map(r => ({
-      ...r,
-      medications: (r.medications || []).map(m => m.id === id ? data : m)
-    })))
     return data
   }
 
   async function deleteMedication(id) {
     const { error } = await supabase.from('medications').delete().eq('id', id)
     if (error) throw error
-    setRecoveries(prev => prev.map(r => ({
-      ...r,
-      medications: (r.medications || []).filter(m => m.id !== id)
-    })))
   }
 
   const activeRecoveries = recoveries.filter(r => r.status === 'recovering')
@@ -108,6 +145,12 @@ export function useRecoveries() {
   }
 }
 
+/**
+ * Calculates time urgency details for veterinary recovery holds.
+ * 
+ * @param {string} releaseDate - ISO date string of scheduled release.
+ * @returns {object} Recovery urgency tracking properties.
+ */
 export function getRecoveryUrgency(releaseDate) {
   if (!releaseDate) return { label: 'No release date', color: 'gray', hours: null }
   const now = new Date()

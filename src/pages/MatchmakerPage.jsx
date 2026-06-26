@@ -39,6 +39,18 @@ const questions = [
 const energyLabels = { 1: 'low-energy', 2: 'medium-energy', 3: 'high-energy' }
 const activityLabels = { 1: 'a cuddler', 2: 'a playful companion', 3: 'an independent spirit' }
 
+function hasKeywordWithoutNegation(text, keyword) {
+  const idx = text.indexOf(keyword)
+  if (idx === -1) return false
+  const precedingText = text.slice(Math.max(0, idx - 20), idx).trim()
+  if (!precedingText) return true
+  const words = precedingText.split(/\s+/)
+  const denylist = ['not', 'no', 'never', "isn't", "aren't", "doesn't", "won't", 'hardly', 'barely']
+  const lastWords = words.slice(-2)
+  const isNegated = lastWords.some(w => denylist.includes(w.toLowerCase().replace(/[^a-z']/g, '')))
+  return !isNegated
+}
+
 export default function MatchmakerPage() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
@@ -102,25 +114,26 @@ export default function MatchmakerPage() {
         const notes = (cat.health_notes || '').toLowerCase()
         const name = (cat.name || '').toLowerCase()
         const textToAnalyze = `${name} ${notes}`
+        const matchesKeyword = (kws) => kws.some(kw => hasKeywordWithoutNegation(textToAnalyze, kw))
 
         // Energy levels parsing
-        if (textToAnalyze.includes('playful') || textToAnalyze.includes('active') || textToAnalyze.includes('energetic') || textToAnalyze.includes('kitten')) {
+        if (matchesKeyword(['playful', 'active', 'energetic', 'kitten'])) {
           catEnergy = 3
-        } else if (textToAnalyze.includes('lazy') || textToAnalyze.includes('couch') || textToAnalyze.includes('calm') || textToAnalyze.includes('sleepy') || textToAnalyze.includes('quiet')) {
+        } else if (matchesKeyword(['lazy', 'couch', 'calm', 'sleepy', 'quiet'])) {
           catEnergy = 1
         }
 
         // Social level parsing (with other pets)
-        if (textToAnalyze.includes('friendly') || textToAnalyze.includes('loves cats') || textToAnalyze.includes('good with dogs') || textToAnalyze.includes('social')) {
+        if (matchesKeyword(['friendly', 'loves cats', 'good with dogs', 'social'])) {
           catSocial = 3
-        } else if (textToAnalyze.includes('shy') || textToAnalyze.includes('scared') || textToAnalyze.includes('hates') || textToAnalyze.includes('only cat') || textToAnalyze.includes('aggressive')) {
+        } else if (matchesKeyword(['shy', 'scared', 'hates', 'only cat', 'aggressive'])) {
           catSocial = 1
         }
 
         // Affection level parsing
-        if (textToAnalyze.includes('cuddly') || textToAnalyze.includes('lap') || textToAnalyze.includes('sweet') || textToAnalyze.includes('affectionate') || textToAnalyze.includes('purr')) {
+        if (matchesKeyword(['cuddly', 'lap', 'sweet', 'affectionate', 'purr'])) {
           catAffection = 1 // Cuddler
-        } else if (textToAnalyze.includes('independent') || textToAnalyze.includes('feral') || textToAnalyze.includes('aloof') || textToAnalyze.includes('skittish')) {
+        } else if (matchesKeyword(['independent', 'feral', 'aloof', 'skittish'])) {
           catAffection = 3 // Independent spirit
         }
 
@@ -175,7 +188,9 @@ export default function MatchmakerPage() {
                 const prevStep = currentStep - 1
                 setAnswers(prev => {
                   const updated = { ...prev }
-                  delete updated[questions[currentStep].id]
+                  for (let i = currentStep; i < questions.length; i++) {
+                    delete updated[questions[i].id]
+                  }
                   return updated
                 })
                 setCurrentStep(prevStep)
