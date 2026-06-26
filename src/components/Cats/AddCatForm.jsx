@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '../UI/Button'
 import { getRandomCat } from '../../lib/catApi'
+import { supabase } from '../../lib/supabase'
 
 export function AddCatForm({ onAdd, uploading, setUploading }) {
   const [form, setForm] = useState({
@@ -20,27 +21,47 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
     const file = e.target.files[0]
     if (!file) return
     setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    const objectUrl = URL.createObjectURL(file)
+    setPhotoPreview(objectUrl)
     
-    // Kitty Cam AI Simulator
+    // Kitty Cam Vision AI
     setScanning(true)
     setScanResult(null)
     setBreedMatch(null)
-    setTimeout(async () => {
-      setScanning(false)
-      const isNeutered = Math.random() > 0.3 // 70% chance to simulate ear-tip found
-      if (isNeutered) {
-        setForm(p => ({ ...p, neutered: true }))
-        setScanResult('🐾 Ear-tip detected! Auto-marked as Neutered.')
-      } else {
-        setScanResult('🔍 No clear ear-tip detected.')
-      }
+    
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      try {
+        const base64Data = reader.result.split(',')[1]
+        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+          body: {
+            action: 'analyze_photo',
+            imageBase64: base64Data,
+            mimeType: file.type
+          }
+        })
+        
+        if (error) throw error
+        
+        const jsonStr = data.text.replace(/```json/gi, '').replace(/```/g, '').trim()
+        const result = JSON.parse(jsonStr)
 
-      const catData = await getRandomCat()
-      if (catData?.breeds?.length > 0) {
-        setBreedMatch(catData)
+        if (result.has_ear_tip) {
+          setForm(p => ({ ...p, neutered: true }))
+          setScanResult(`🐾 Ear-tip detected! ${result.reason}`)
+        } else {
+          setScanResult(`🔍 No clear ear-tip. ${result.reason || ''}`)
+        }
+
+        setBreedMatch({ url: objectUrl, breeds: [{ name: result.breed || 'Unknown' }] })
+      } catch (err) {
+        console.error("Vision AI failed", err)
+        setScanResult('⚠️ AI Scan failed. Please check manually.')
+      } finally {
+        setScanning(false)
       }
-    }, 2000)
+    }
+    reader.readAsDataURL(file)
   }
 
   async function handleSubmit(e) {

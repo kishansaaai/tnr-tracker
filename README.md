@@ -147,13 +147,13 @@ Real-time organizational telemetry.
   * A custom React component that takes a cat's `color` string (e.g., "Orange Tabby", "Tuxedo", "Calico") and generates a unique CSS-based cat face icon.
   * **Logic:** Uses a `useMemo` color mapper to determine base colors and ear colors. It renders SVG elements combined with Tailwind border-radius hacks to make incredibly cute icons without needing external image assets.
 
-### 2.9 The Kitty Cam AI Simulator (`KittyCam.jsx`)
-* **UX Design:** Built to simulate a highly advanced biometric AI scan for field volunteers.
+### 2.9 Kitty Cam Vision AI (`AddCatForm.jsx`)
+* **UX Design:** A highly advanced biometric AI scanner for field volunteers to automatically log cats.
 * **Implementation:** 
-  * Uses a hidden `<input type="file" accept="image/*">` triggered by an overarching bounding box.
-  * Uses `URL.createObjectURL(file)` to instantly display the uploaded image locally without waiting for a server upload.
-  * Implements a staged timeout array: It cycles through states ("Analyzing ear-tip...", "Checking biometric database...", "Calculating BMI...") using sequential React `useEffect` timeouts.
-  * Superimposes a green CSS scanning line (`@keyframes scan`) that moves up and down the image using absolute positioning and `calc(100% - 2px)`.
+  * Uses a hidden `<input type="file" accept="image/*">` to instantly display the uploaded image using `URL.createObjectURL(file)`.
+  * Converts the image file to a base64 encoded string via `FileReader` and sends it to the `gemini-proxy` Edge Function.
+  * Uses the **Gemini 2.5 Flash Vision API** to analyze the photo, explicitly identifying if the cat has an ear-tip (the universal TNR marker) and guessing the breed/coat pattern.
+  * Automatically toggles the "Neutered" checkbox in the UI if an ear-tip is successfully detected by the AI.
 
 ---
 
