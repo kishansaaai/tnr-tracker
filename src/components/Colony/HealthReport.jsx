@@ -34,20 +34,19 @@ function formatContent(text, color) {
   return (
     <div className="space-y-3 mt-1">
       {lines.map((line, idx) => {
-        const hasIndent = line.startsWith(' ') || line.startsWith('\t')
         const trimmed = line.trim()
         if (!trimmed) return null
 
         // Match numbered lists: "1. **Title:** text" or "1. text"
         const numListMatch = trimmed.match(/^(\d+)\.\s+(.*)$/)
         // Match bullet lists: "- **Title:** text" or "* text"
-        const bulletListMatch = trimmed.match(/^[-*•]\s+(.*)$/)
+        const bulletListMatch = trimmed.match(/^[-*]\s+(.*)$/)
 
         if (numListMatch) {
           const num = numListMatch[1]
           const content = numListMatch[2]
           return (
-            <div key={idx} className={`flex gap-3 items-start pl-1 ${hasIndent ? 'pl-9' : ''}`}>
+            <div key={idx} className="flex gap-3 items-start pl-1">
               <span className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold mt-0.5 shadow-sm ${classes.bg}`}>
                 {num}
               </span>
@@ -61,8 +60,8 @@ function formatContent(text, color) {
         if (bulletListMatch) {
           const content = bulletListMatch[1]
           return (
-            <div key={idx} className={`flex gap-3 items-start pl-1 ${hasIndent ? 'pl-9' : ''}`}>
-              <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full mt-2.5 ${classes.bullet}`} />
+            <div key={idx} className="flex gap-3 items-start pl-1">
+              <span className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${classes.bullet}`} />
               <div className="text-sm text-gray-700 leading-relaxed flex-1">
                 {renderBoldText(content)}
               </div>
@@ -71,7 +70,7 @@ function formatContent(text, color) {
         }
 
         return (
-          <p key={idx} className={`text-sm text-gray-700 leading-relaxed ${hasIndent ? 'pl-9' : ''}`}>
+          <p key={idx} className="text-sm text-gray-700 leading-relaxed">
             {renderBoldText(trimmed)}
           </p>
         )
@@ -211,12 +210,11 @@ export function HealthReport({ colony, cats, updates }) {
               report[key] ? (
                 <div
                   key={key}
-                  className={`rounded-2xl p-5 border transition-all duration-300 hover:shadow-md ${
-                    color === 'blue' ? 'bg-blue-50/20 border-blue-100/60 border-l-4 border-l-blue-500' :
-                    color === 'red' ? 'bg-rose-50/20 border-rose-100/60 border-l-4 border-l-rose-500' :
-                    color === 'green' ? 'bg-emerald-50/20 border-emerald-100/60 border-l-4 border-l-emerald-500' :
-                    'bg-amber-50/25 border-amber-100/60 border-l-4 border-l-amber-500'
-                  }`}
+                  className={`rounded-2xl p-5 border transition-all duration-300 hover:shadow-md ${color === 'blue' ? 'bg-blue-50/20 border-blue-100/60 border-l-4 border-l-blue-500' :
+                      color === 'red' ? 'bg-rose-50/20 border-rose-100/60 border-l-4 border-l-rose-500' :
+                        color === 'green' ? 'bg-emerald-50/20 border-emerald-100/60 border-l-4 border-l-emerald-500' :
+                          'bg-amber-50/25 border-amber-100/60 border-l-4 border-l-amber-500'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5 mb-2.5">
                     {icon}
