@@ -53,6 +53,32 @@ To run TNR Tracker locally, follow these steps:
    npm run dev
    ```
 
+### 🔄 Database Migration Rollbacks & Resetting
+
+To reset your local database stack or revert migrations:
+
+- **Reset the Entire Local Database Stack:**
+  Recreates the local DB, re-runs all migrations, and applies the seed file:
+  ```bash
+  supabase db reset
+  ```
+- **Roll Back Database Schema Manually (Hosted / SQL Editor):**
+  If you need to completely purge and recreate database tables, execute the following SQL script to drop all tables in cascade order:
+  ```sql
+  DROP TABLE IF EXISTS public.api_rate_limits CASCADE;
+  DROP TABLE IF EXISTS public.medications CASCADE;
+  DROP TABLE IF EXISTS public.recoveries CASCADE;
+  DROP TABLE IF EXISTS public.traps CASCADE;
+  DROP TABLE IF EXISTS public.cats CASCADE;
+  DROP TABLE IF EXISTS public.colonies CASCADE;
+  DROP TABLE IF EXISTS public.profiles CASCADE;
+  ```
+  After executing, run the database setup scripts sequentially:
+  1. `supabase/schema.sql` (Initial tables, profile constraints, policies)
+  2. `supabase/migration_v2.sql` (Indexes, spay/neuter validation triggers)
+  3. `supabase/migration_v3.sql` (Rate limits table creation)
+  4. `supabase/seed.sql` (Local mock/seed dataset)
+
 ---
 
 ## 🛠️ 1. Technical Stack & Foundation

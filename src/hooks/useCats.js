@@ -40,6 +40,9 @@ export function useCats(colonyId) {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     if (colonyId) fetchCats()
@@ -63,15 +66,35 @@ export function useCats(colonyId) {
     return () => supabase.removeChannel(channel)
   }, [colonyId])
 
-  async function fetchCats() {
-    setLoading(true)
+  async function fetchCats(append = false, targetPage = 0) {
+    if (!append) {
+      setLoading(true)
+      setPage(0)
+    }
     setError(null)
-    let query = supabase.from('cats').select('*').order('created_at', { ascending: false })
+    let query = supabase
+      .from('cats')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(targetPage * PAGE_SIZE, (targetPage + 1) * PAGE_SIZE - 1)
     if (colonyId) query = query.eq('colony_id', colonyId)
     const { data, error: fetchErr } = await query
-    if (!fetchErr) setCats(data || [])
+    if (!fetchErr) {
+      if (append) {
+        setCats(prev => [...prev, ...(data || [])])
+      } else {
+        setCats(data || [])
+      }
+      setHasMore((data || []).length === PAGE_SIZE)
+    }
     else setError(fetchErr)
     setLoading(false)
+  }
+
+  function loadMore() {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchCats(true, nextPage)
   }
 
   async function addCat(catData) {
@@ -100,7 +123,7 @@ export function useCats(colonyId) {
     if (error) throw error
   }
 
-  return { cats, loading, error, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto }
+  return { cats, loading, error, fetchCats, addCat, updateCat, deleteCat, uploadCatPhoto, hasMore, loadMore }
 }
 
 /**
@@ -113,6 +136,9 @@ export function useAllCats() {
   const [cats, setCats] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     fetchAllCats()
@@ -133,16 +159,33 @@ export function useAllCats() {
     return () => supabase.removeChannel(channel)
   }, [])
 
-  async function fetchAllCats() {
-    setLoading(true)
+  async function fetchAllCats(append = false, targetPage = 0) {
+    if (!append) {
+      setLoading(true)
+      setPage(0)
+    }
     setError(null)
     const { data, error: fetchErr } = await supabase
       .from('cats')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!fetchErr) setCats(data || [])
+      .range(targetPage * PAGE_SIZE, (targetPage + 1) * PAGE_SIZE - 1)
+    if (!fetchErr) {
+      if (append) {
+        setCats(prev => [...prev, ...(data || [])])
+      } else {
+        setCats(data || [])
+      }
+      setHasMore((data || []).length === PAGE_SIZE)
+    }
     else setError(fetchErr)
     setLoading(false)
+  }
+
+  function loadMore() {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchAllCats(true, nextPage)
   }
 
   async function addCat(catData) {
@@ -171,5 +214,5 @@ export function useAllCats() {
     if (error) throw error
   }
 
-  return { cats, loading, error, fetchAllCats, addCat, updateCat, deleteCat }
+  return { cats, loading, error, fetchAllCats, addCat, updateCat, deleteCat, hasMore, loadMore }
 }

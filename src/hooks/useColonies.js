@@ -12,6 +12,9 @@ export function useColonies() {
   const [colonies, setColonies] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     fetchColonies()
@@ -32,18 +35,52 @@ export function useColonies() {
     return () => supabase.removeChannel(channel)
   }, [])
 
-  async function fetchColonies() {
-    setLoading(true)
+  /**
+   * Fetches colonies from the database with pagination support.
+   * 
+   * @param {boolean} [append=false] - Whether to append new results to the existing state.
+   * @param {number} [targetPage=0] - The zero-indexed page number to fetch.
+   * @returns {Promise<void>}
+   */
+  async function fetchColonies(append = false, targetPage = 0) {
+    if (!append) {
+      setLoading(true)
+      setPage(0)
+    }
     setError(null)
     const { data, error: fetchErr } = await supabase
       .from('colonies')
       .select('*')
       .order('created_at', { ascending: false })
-    if (!fetchErr) setColonies(data || [])
+      .range(targetPage * PAGE_SIZE, (targetPage + 1) * PAGE_SIZE - 1)
+    if (!fetchErr) {
+      if (append) {
+        setColonies(prev => [...prev, ...(data || [])])
+      } else {
+        setColonies(data || [])
+      }
+      setHasMore((data || []).length === PAGE_SIZE)
+    }
     else setError(fetchErr)
     setLoading(false)
   }
 
+  /**
+   * Increments the page number and fetches the next batch of colonies.
+   */
+  function loadMore() {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchColonies(true, nextPage)
+  }
+
+  /**
+   * Inserts a new colony into the database.
+   * Note: The realtime subscription will automatically update the local state.
+   * 
+   * @param {object} colonyData - The fields for the new colony.
+   * @returns {Promise<object>} The newly created colony object.
+   */
   async function createColony(colonyData) {
     const { data, error } = await supabase
       .from('colonies')
@@ -54,6 +91,14 @@ export function useColonies() {
     return data
   }
 
+  /**
+   * Updates an existing colony in the database.
+   * Note: The realtime subscription will automatically update the local state.
+   * 
+   * @param {string} id - The UUID of the colony to update.
+   * @param {object} updates - The fields/values to update.
+   * @returns {Promise<object>} The updated colony object.
+   */
   async function updateColony(id, updates) {
     const { data, error } = await supabase
       .from('colonies')
@@ -65,12 +110,19 @@ export function useColonies() {
     return data
   }
 
+  /**
+   * Deletes a colony from the database.
+   * Note: The realtime subscription will automatically update the local state.
+   * 
+   * @param {string} id - The UUID of the colony to delete.
+   * @returns {Promise<void>}
+   */
   async function deleteColony(id) {
     const { error } = await supabase.from('colonies').delete().eq('id', id)
     if (error) throw error
   }
 
-  return { colonies, loading, error, fetchColonies, createColony, updateColony, deleteColony }
+  return { colonies, loading, error, fetchColonies, createColony, updateColony, deleteColony, hasMore, loadMore }
 }
 
 /**

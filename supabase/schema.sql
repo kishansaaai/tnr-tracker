@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL DEFAULT '',
-  role TEXT NOT NULL DEFAULT 'volunteer' CHECK (role IN ('admin', 'volunteer')),
+  role TEXT NOT NULL DEFAULT 'volunteer' CHECK (role IN ('admin', 'volunteer', 'feeder')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -207,7 +207,11 @@ CREATE POLICY "Authenticated users can read all traps"
 
 CREATE POLICY "Authenticated users can insert traps"
   ON traps FOR INSERT TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    assigned_to IS NULL OR
+    assigned_to = auth.uid() OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
 
 CREATE POLICY "Owners or admins can update traps"
   ON traps FOR UPDATE TO authenticated
@@ -229,7 +233,17 @@ CREATE POLICY "Authenticated users can read all updates"
 
 CREATE POLICY "Authenticated users can insert updates"
   ON updates FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = posted_by);
+  WITH CHECK (
+    auth.uid() = posted_by AND
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'volunteer'))
+  );
+
+CREATE POLICY "Feeders can insert feeding updates"
+  ON updates FOR INSERT TO authenticated
+  WITH CHECK (
+    auth.uid() = posted_by AND
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'feeder')
+  );
 
 CREATE POLICY "Users can delete their own updates"
   ON updates FOR DELETE TO authenticated

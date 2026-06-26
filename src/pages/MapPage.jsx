@@ -292,6 +292,7 @@ export default function MapPage() {
               ? 'bg-orange-100 text-orange-800 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}
+          aria-label="Toggle priority heatmap"
         >
           🔥 Priority Heatmap
         </button>
@@ -303,6 +304,7 @@ export default function MapPage() {
               ? 'bg-blue-100 text-blue-800 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}
+          aria-label="Toggle route planner"
         >
           🗺️ Route Planner
         </button>

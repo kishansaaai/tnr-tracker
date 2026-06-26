@@ -40,15 +40,20 @@ const energyLabels = { 1: 'low-energy', 2: 'medium-energy', 3: 'high-energy' }
 const activityLabels = { 1: 'a cuddler', 2: 'a playful companion', 3: 'an independent spirit' }
 
 function hasKeywordWithoutNegation(text, keyword) {
-  const idx = text.indexOf(keyword)
-  if (idx === -1) return false
-  const precedingText = text.slice(Math.max(0, idx - 20), idx).trim()
-  if (!precedingText) return true
-  const words = precedingText.split(/\s+/)
-  const denylist = ['not', 'no', 'never', "isn't", "aren't", "doesn't", "won't", 'hardly', 'barely']
-  const lastWords = words.slice(-2)
-  const isNegated = lastWords.some(w => denylist.includes(w.toLowerCase().replace(/[^a-z']/g, '')))
-  return !isNegated
+  let searchFrom = 0
+  while (true) {
+    const idx = text.indexOf(keyword, searchFrom)
+    if (idx === -1) return false
+    
+    const precedingText = text.slice(Math.max(0, idx - 20), idx).trim()
+    const words = precedingText.split(/\s+/)
+    const denylist = ['not', 'no', 'never', "isn't", "aren't", "doesn't", "won't", 'hardly', 'barely', "wasn't", 'formerly', 'previously', 'used to be']
+    const lastWords = words.slice(-2)
+    const isNegated = lastWords.some(w => denylist.includes(w.toLowerCase().replace(/[^a-z']/g, '')))
+    
+    if (!isNegated) return true // Found a non-negated instance
+    searchFrom = idx + keyword.length
+  }
 }
 
 export default function MatchmakerPage() {
@@ -59,6 +64,7 @@ export default function MatchmakerPage() {
   const [loadingGif, setLoadingGif] = useState(null)
   const [match, setMatch] = useState(null)
   const [matchScore, setMatchScore] = useState(0)
+  const [matchMeta, setMatchMeta] = useState({ usedKeywordOverride: false, energyDist: 0, socialDist: 0, activityDist: 0 })
 
   useEffect(() => {
     document.title = 'TNR Tracker — Cat Matchmaker'
@@ -98,6 +104,7 @@ export default function MatchmakerPage() {
 
       let bestMatch = cats[0]
       let highestScore = -1
+      let bestMatchMeta = { usedKeywordOverride: false, energyDist: 0, socialDist: 0, activityDist: 0 }
 
       for (const cat of cats) {
         // Deterministically generate base traits using the cat.id UUID hash
@@ -109,6 +116,7 @@ export default function MatchmakerPage() {
         let catEnergy = Math.abs(hash % 3) + 1
         let catSocial = Math.abs((hash >> 2) % 3) + 1
         let catAffection = Math.abs((hash >> 4) % 3) + 1
+        let usedKeywordOverride = false
 
         // Heuristically override traits based on real health/personality notes
         const notes = (cat.health_notes || '').toLowerCase()
@@ -119,22 +127,28 @@ export default function MatchmakerPage() {
         // Energy levels parsing
         if (matchesKeyword(['playful', 'active', 'energetic', 'kitten'])) {
           catEnergy = 3
+          usedKeywordOverride = true
         } else if (matchesKeyword(['lazy', 'couch', 'calm', 'sleepy', 'quiet'])) {
           catEnergy = 1
+          usedKeywordOverride = true
         }
 
         // Social level parsing (with other pets)
         if (matchesKeyword(['friendly', 'loves cats', 'good with dogs', 'social'])) {
           catSocial = 3
+          usedKeywordOverride = true
         } else if (matchesKeyword(['shy', 'scared', 'hates', 'only cat', 'aggressive'])) {
           catSocial = 1
+          usedKeywordOverride = true
         }
 
         // Affection level parsing
         if (matchesKeyword(['cuddly', 'lap', 'sweet', 'affectionate', 'purr'])) {
           catAffection = 1 // Cuddler
+          usedKeywordOverride = true
         } else if (matchesKeyword(['independent', 'feral', 'aloof', 'skittish'])) {
           catAffection = 3 // Independent spirit
+          usedKeywordOverride = true
         }
 
         // Calculate affinity score: lower distance is better.
@@ -149,11 +163,13 @@ export default function MatchmakerPage() {
         if (currentScore > highestScore) {
           highestScore = currentScore
           bestMatch = cat
+          bestMatchMeta = { usedKeywordOverride, energyDist, socialDist, activityDist }
         }
       }
 
       setMatchScore(highestScore)
       setMatch(bestMatch)
+      setMatchMeta(bestMatchMeta)
 
     } catch (e) {
       setMatch('error')
@@ -210,7 +226,7 @@ export default function MatchmakerPage() {
                   onClick={() => handleAnswer(questions[currentStep].id, option.score)}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium active:scale-95 ${
                     isSelected
-                      ? 'border-rose-500 bg-rose-50 text-rose-900 shadow-sm'
+                      ? 'border-rose-50 bg-rose-50 text-rose-900 shadow-sm'
                       : 'border-rose-50 hover:border-rose-400 hover:bg-rose-50 text-gray-700 hover:text-rose-900'
                   }`}
                 >
@@ -252,6 +268,10 @@ export default function MatchmakerPage() {
           </div>
 
           <h2 className="text-4xl font-black text-gray-900 mb-2">{match.name || 'Unnamed Kitty'}</h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Match confidence: {matchMeta.usedKeywordOverride ? '🟢 High' : '🟡 Medium'}
+            {matchMeta.usedKeywordOverride ? ' (based on personality notes)' : ' (based on general traits)'}
+          </p>
           <p className="text-lg text-rose-600 font-medium mb-6">
             Currently residing at <span className="font-bold">{match.colony?.name || 'a local colony'}</span>
           </p>
@@ -263,10 +283,20 @@ export default function MatchmakerPage() {
               <strong> {match.name || 'This kitty'}</strong> matched your lifestyle with a compatibility score of {matchScore}/10.
               {match.health_notes && ` Note: ${match.health_notes}`}
             </p>
+            <div className="flex gap-2 mt-4">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${matchMeta.energyDist === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                Energy {matchMeta.energyDist === 0 ? '✓' : `±${matchMeta.energyDist}`}
+              </span>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${matchMeta.socialDist === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                Social {matchMeta.socialDist === 0 ? '✓' : `±${matchMeta.socialDist}`}
+              </span>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${matchMeta.activityDist === 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                Activity {matchMeta.activityDist === 0 ? '✓' : `±${matchMeta.activityDist}`}
+              </span>
+            </div>
           </div>
 
           <div className="flex justify-center gap-4">
-
             <Button size="lg" variant="secondary" onClick={() => { setMatch(null); setCurrentStep(0); setAnswers({}); }}>
               Retake Quiz
             </Button>

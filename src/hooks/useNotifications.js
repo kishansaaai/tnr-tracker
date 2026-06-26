@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
+/**
+ * Hook to manage real-time client notifications based on PostgreSQL CDC triggers.
+ * Handles permission requests, localStorage settings persistence, and local status updating.
+ * 
+ * @returns {object} Hook properties: { notifications, unreadCount, enabled, toggleNotifications, markAllRead, clearAll }
+ */
 export function useNotifications() {
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -87,6 +93,10 @@ export function useNotifications() {
     }
   }, [enabled])
 
+  /**
+   * Adds a notification internally and displays browser notifications / toasts.
+   * @param {object} notif - Notification description.
+   */
   function addNotification(notif) {
     setNotifications(prev => [notif, ...prev].slice(0, 50))
     setUnreadCount(prev => prev + 1)
@@ -106,6 +116,9 @@ export function useNotifications() {
     })
   }
 
+  /**
+   * Toggles permission request and configures the listener channels.
+   */
   function toggleNotifications() {
     if (!enabled) {
       if ('Notification' in window && Notification.permission === 'default') {
@@ -123,11 +136,17 @@ export function useNotifications() {
     }
   }
 
+  /**
+   * Marks all read in local notifications list.
+   */
   function markAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
   }
 
+  /**
+   * Clear the local notifications list.
+   */
   function clearAll() {
     setNotifications([])
     setUnreadCount(0)

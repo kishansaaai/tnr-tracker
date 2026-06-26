@@ -12,6 +12,9 @@ export function useRecoveries() {
   const [recoveries, setRecoveries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 50
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     fetchRecoveries()
@@ -64,16 +67,33 @@ export function useRecoveries() {
     }
   }
 
-  async function fetchRecoveries() {
-    setLoading(true)
+  async function fetchRecoveries(append = false, targetPage = 0) {
+    if (!append) {
+      setLoading(true)
+      setPage(0)
+    }
     setError(null)
     const { data, error: fetchErr } = await supabase
       .from('recoveries')
       .select('*, cats(name, gender, photo_url, colony_id), colonies(name), profiles:public_profiles(name), medications(*)')
       .order('created_at', { ascending: false })
-    if (!fetchErr) setRecoveries(data || [])
+      .range(targetPage * PAGE_SIZE, (targetPage + 1) * PAGE_SIZE - 1)
+    if (!fetchErr) {
+      if (append) {
+        setRecoveries(prev => [...prev, ...(data || [])])
+      } else {
+        setRecoveries(data || [])
+      }
+      setHasMore((data || []).length === PAGE_SIZE)
+    }
     else setError(fetchErr)
     setLoading(false)
+  }
+
+  function loadMore() {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchRecoveries(true, nextPage)
   }
 
   async function createRecovery(recoveryData) {
@@ -142,6 +162,8 @@ export function useRecoveries() {
     addMedication,
     updateMedication,
     deleteMedication,
+    hasMore,
+    loadMore,
   }
 }
 

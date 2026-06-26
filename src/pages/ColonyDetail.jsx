@@ -17,6 +17,7 @@ import { FeedAnimation } from '../components/Colony/FeedAnimation'
 import { TNROverlay } from '../components/Colony/TNROverlay'
 import { CardSkeleton, CatSkeleton } from '../components/UI/Skeleton'
 import { openVetSummary } from '../lib/vetExport'
+import { Modal } from '../components/UI/Modal'
 import toast from 'react-hot-toast'
 import { friendlyError } from '../lib/utils'
 
@@ -24,7 +25,7 @@ export default function ColonyDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { colony, loading: colonyLoading, updateColony, deleteColony } = useColony(id)
-  const { cats, loading: catsLoading, addCat, deleteCat, uploadCatPhoto } = useCats(id)
+  const { cats, loading: catsLoading, addCat, deleteCat, uploadCatPhoto, hasMore, loadMore } = useCats(id)
   const { traps, updateTrap, deleteTrap } = useTraps(id)
   const { updates, postUpdate } = useUpdates(id)
   const { user, isAdmin } = useAuth()
@@ -35,7 +36,7 @@ export default function ColonyDetail() {
   const [showAddCat, setShowAddCat] = useState(false)
   const [isFeeding, setIsFeeding] = useState(false)
   const [showTNR, setShowTNR] = useState(false)
-  const [visibleCatsCount, setVisibleCatsCount] = useState(10)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const neuteredCount = cats.filter(cat => cat.neutered).length
   const neuteredPct = cats.length > 0 ? Math.round((neuteredCount / cats.length) * 100) : 0
@@ -91,7 +92,6 @@ export default function ColonyDetail() {
   }
 
   async function handleDeleteColony() {
-    if (!window.confirm('Are you sure you want to delete this colony? This will remove all associated cat records and traps.')) return
     try {
       await deleteColony()
       toast.success('Colony deleted')
@@ -219,7 +219,7 @@ export default function ColonyDetail() {
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={handleDeleteColony}
+                      onClick={() => setShowDeleteConfirm(true)}
                       aria-label="Delete colony"
                     >
                       Delete
@@ -318,15 +318,15 @@ export default function ColonyDetail() {
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {cats.slice(0, visibleCatsCount).map(cat => (
+                {cats.map(cat => (
                   <CatCard key={cat.id} cat={cat} onDelete={handleDeleteCat} isAdmin={isAdmin} />
                 ))}
-                {cats.length > visibleCatsCount && (
+                {hasMore && (
                   <div className="sm:col-span-2 flex justify-center mt-4">
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => setVisibleCatsCount(prev => prev + 10)}
+                      onClick={loadMore}
                       aria-label="Load more cats in roster"
                     >
                       Load More Cats
@@ -385,6 +385,21 @@ export default function ColonyDetail() {
       {/* Micro-animation */}
       <FeedAnimation active={isFeeding} onComplete={() => setIsFeeding(false)} />
       <TNROverlay active={showTNR} onComplete={() => setShowTNR(false)} />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Colony?"
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          This will permanently remove this colony and all associated cat records and traps. This cannot be undone.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <Button variant="secondary" size="sm" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          <Button variant="danger" size="sm" onClick={() => { setShowDeleteConfirm(false); handleDeleteColony(); }}>Delete Colony</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

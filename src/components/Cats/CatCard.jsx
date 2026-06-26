@@ -63,12 +63,14 @@ export function CatCard({ cat, onDelete, isAdmin }) {
             <button
               onClick={() => { onDelete(cat.id); setShowDelete(false) }}
               className="text-xs text-red-600 font-medium hover:underline"
+              aria-label={`Confirm remove cat ${cat.name || 'unnamed'}`}
             >
               Yes, remove
             </button>
             <button
               onClick={() => setShowDelete(false)}
               className="text-xs text-gray-500 hover:underline"
+              aria-label={`Cancel remove cat ${cat.name || 'unnamed'}`}
             >
               Cancel
             </button>

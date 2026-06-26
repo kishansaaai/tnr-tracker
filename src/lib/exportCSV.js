@@ -2,6 +2,22 @@
  * Compiles colony and cat data into a structured CSV and initiates a browser file download.
  * Pairs cats with their corresponding colonies in a flat relational layout.
  * 
+ * Format: Comma-Separated Values (CSV), RFC 4180 compliant with double quote escaping.
+ * Encoding: UTF-8 (pre-configured via Blob constructor).
+ * Columns:
+ *  - Colony ID: UUID of the colony
+ *  - Colony Name: Name of the colony (escaped)
+ *  - Status: Current status (e.g. Active, Pending)
+ *  - Latitude: Floating point latitude coordinate
+ *  - Longitude: Floating point longitude coordinate
+ *  - Description: Summary description of the colony (escaped)
+ *  - Cat ID: UUID of the cat (empty if colony has no cats)
+ *  - Cat Name: Name of the cat or 'Unnamed' (escaped)
+ *  - Gender: Cat gender (Male, Female, Unknown)
+ *  - Neutered: Yes / No value indicating spay/neuter status
+ *  - Health Notes: Description of the cat's health status (escaped)
+ *  - Cat Added: Locale-formatted date when the cat was added
+ * 
  * @param {Array} colonies - Array of colony objects to export.
  * @param {Array} cats - Array of all cat objects.
  */

@@ -5,14 +5,14 @@ import { AuthProvider, useAuth } from './hooks/useAuth.jsx'
 import { Navbar } from './components/UI/Navbar'
 import { PawLoader } from './components/UI/PawLoader'
 import { ErrorBoundary } from './components/UI/ErrorBoundary'
-import Auth from './pages/Auth'
-import ColonyDetail from './pages/ColonyDetail'
-import Dashboard from './pages/Dashboard'
-import Volunteers from './pages/Volunteers'
-import RecoveryPage from './pages/RecoveryPage'
-import AdoptionPage from './pages/AdoptionPage'
-import MatchmakerPage from './pages/MatchmakerPage'
 
+const Auth = React.lazy(() => import('./pages/Auth'))
+const ColonyDetail = React.lazy(() => import('./pages/ColonyDetail'))
+const Dashboard = React.lazy(() => import('./pages/Dashboard'))
+const Volunteers = React.lazy(() => import('./pages/Volunteers'))
+const RecoveryPage = React.lazy(() => import('./pages/RecoveryPage'))
+const AdoptionPage = React.lazy(() => import('./pages/AdoptionPage'))
+const MatchmakerPage = React.lazy(() => import('./pages/MatchmakerPage'))
 const MapPage = React.lazy(() => import('./pages/MapPage'))
 const NetworkGraph = React.lazy(() => import('./pages/NetworkGraph'))
 
@@ -48,7 +48,13 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+      <Route path="/auth" element={
+        <ErrorBoundary>
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+            {user ? <Navigate to="/" replace /> : <Auth />}
+          </Suspense>
+        </ErrorBoundary>
+      } />
       <Route path="/" element={
         <ProtectedRoute>
           <div className="flex flex-col h-screen">
@@ -68,7 +74,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <ColonyDetail />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <ColonyDetail />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -78,7 +88,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <Dashboard />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <Dashboard />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -88,7 +102,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <RecoveryPage />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <RecoveryPage />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -98,7 +116,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <AdoptionPage />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <AdoptionPage />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -108,7 +130,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <MatchmakerPage />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <MatchmakerPage />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </ProtectedRoute>
@@ -132,7 +158,11 @@ function AppRoutes() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <div className="flex-1 overflow-y-auto">
-              <Volunteers />
+              <ErrorBoundary>
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+                  <Volunteers />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </div>
         </AdminRoute>

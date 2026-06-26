@@ -64,9 +64,10 @@ export function AuthProvider({ children }) {
   }
 
   const isAdmin = profile?.role === 'admin'
+  const isFeeder = profile?.role === 'feeder'
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAdmin, signIn, signUp, signOut, refetchProfile: () => fetchProfile(user?.id) }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isFeeder, signIn, signUp, signOut, refetchProfile: () => fetchProfile(user?.id) }}>
       {children}
     </AuthContext.Provider>
   )

@@ -4,16 +4,18 @@ import { useNotifications } from '../../hooks/useNotifications'
 import { NotificationDropdown } from './NotificationDropdown'
 
 export function Navbar() {
-  const { profile, isAdmin, signOut } = useAuth()
+  const { profile, isAdmin, isFeeder, signOut } = useAuth()
   const location = useLocation()
   const { notifications, unreadCount, enabled, toggleNotifications, markAllRead, clearAll } = useNotifications()
 
   const links = [
     { to: '/', label: 'Map', icon: '🗺️' },
     { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { to: '/recovery', label: 'Recovery', icon: '🏥' },
-    { to: '/adoption', label: 'Adoption', icon: '🏠' },
-    { to: '/matchmaker', label: 'Matchmaker', icon: '💘' },
+    ...(isFeeder ? [] : [
+      { to: '/recovery', label: 'Recovery', icon: '🏥' },
+      { to: '/adoption', label: 'Adoption', icon: '🏠' },
+      { to: '/matchmaker', label: 'Matchmaker', icon: '💘' },
+    ]),
     ...(isAdmin ? [
       { to: '/network', label: 'Network', icon: '🕸️' },
       { to: '/volunteers', label: 'Volunteers', icon: '👥' }

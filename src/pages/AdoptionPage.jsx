@@ -77,15 +77,9 @@ function PipelineCatCard({ cat, colonies, onMove, stages }) {
 }
 
 export default function AdoptionPage() {
-  const { cats, loading, updateCat, error } = useAllCats()
+  const { cats, loading, updateCat, error, hasMore, loadMore } = useAllCats()
   const { colonies } = useColonies()
   const [filterColony, setFilterColony] = useState('')
-  const [visibleCounts, setVisibleCounts] = useState({
-    tnr: 10,
-    socializing: 10,
-    adoption_ready: 10,
-    adopted: 10,
-  })
 
   useEffect(() => {
     document.title = 'TNR Tracker — Adoption Pipeline'
@@ -161,51 +155,59 @@ export default function AdoptionPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PIPELINE_STAGES.map(stage => {
-            const stageCats = filteredCats.filter(c => (c.pipeline_status || 'tnr') === stage.id)
-            const visibleCats = stageCats.slice(0, visibleCounts[stage.id])
+        <div>
+          <div className="overflow-x-auto pb-4 -mx-4 px-4">
+            <div className="flex gap-4 min-w-[800px] lg:grid lg:grid-cols-4 lg:min-w-0">
+              {PIPELINE_STAGES.map((stage, stageIdx) => {
+                const stageCats = filteredCats.filter(c => (c.pipeline_status || 'tnr') === stage.id)
 
-            return (
-              <div key={stage.id} className={`rounded-2xl border-2 border-dashed p-3 min-h-[300px] flex flex-col justify-between ${stage.color}`}>
-                <div>
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/50">
-                    <span className="text-lg">{stage.icon}</span>
-                    <h3 className="font-semibold text-gray-800 text-sm">{stage.label}</h3>
-                    <span className="ml-auto bg-white/80 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                      {stageCats.length}
-                    </span>
-                  </div>
+                return (
+                  <div key={stage.id} className={`flex-shrink-0 w-[220px] lg:w-auto rounded-2xl border-2 border-dashed p-3 min-h-[300px] flex flex-col justify-between ${stage.color}`}>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/50">
+                        <span className="text-lg">{stage.icon}</span>
+                        <h3 className="font-semibold text-gray-800 text-sm">{stage.label}</h3>
+                        {stageIdx < PIPELINE_STAGES.length - 1 && (
+                          <span className="ml-2 lg:hidden text-gray-300">→</span>
+                        )}
+                        <span className="ml-auto bg-white/80 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                          {stageCats.length}
+                        </span>
+                      </div>
 
-                  {stageCats.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-8 italic">No cats in this stage</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {visibleCats.map(cat => (
-                        <PipelineCatCard
-                          key={cat.id}
-                          cat={cat}
-                          colonies={colonies}
-                          onMove={handleMoveCat}
-                          stages={PIPELINE_STAGES}
-                        />
-                      ))}
+                      {stageCats.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-8 italic">No cats in this stage</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {stageCats.map(cat => (
+                            <PipelineCatCard
+                              key={cat.id}
+                              cat={cat}
+                              colonies={colonies}
+                              onMove={handleMoveCat}
+                              stages={PIPELINE_STAGES}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
 
-                {stageCats.length > visibleCounts[stage.id] && (
-                  <button
-                    onClick={() => setVisibleCounts(prev => ({ ...prev, [stage.id]: prev[stage.id] + 10 }))}
-                    className="w-full py-1.5 text-xs text-green-700 hover:text-green-800 bg-white hover:bg-green-50 border border-green-200 rounded-lg font-medium transition-colors mt-3"
-                    aria-label={`Load more cats for ${stage.label}`}
-                  >
-                    Load More
-                  </button>
-                )}
-              </div>
-            )
-          })}
+          {hasMore && (
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={loadMore}
+                className="px-6 py-2.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow-md transition-all text-sm cursor-pointer"
+                aria-label="Load more cats globally"
+              >
+                Load More Cats
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

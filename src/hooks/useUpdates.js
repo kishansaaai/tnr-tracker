@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Custom hook to fetch and manage update feed messages for a colony.
+ * Subscribes to real-time updates to display new updates instantly.
+ * 
+ * @param {string} colonyId - UUID of the colony to manage updates for.
+ * @returns {object} Hook utilities including updates state, loading, posting functions, and fetch updates.
+ */
 export function useUpdates(colonyId) {
   const [updates, setUpdates] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +42,11 @@ export function useUpdates(colonyId) {
     return () => supabase.removeChannel(channel)
   }, [colonyId])
 
+  /**
+   * Fetches the initial list of updates for the specified colony.
+   * 
+   * @returns {Promise<void>}
+   */
   async function fetchUpdates() {
     setLoading(true)
     const { data, error } = await supabase
@@ -47,6 +59,13 @@ export function useUpdates(colonyId) {
     setLoading(false)
   }
 
+  /**
+   * Posts a new update/message to the colony feed.
+   * 
+   * @param {string} message - The text content of the update (max 1000 chars).
+   * @param {string} userId - The UUID of the user posting the update.
+   * @returns {Promise<object>} The newly posted update.
+   */
   async function postUpdate(message, userId) {
     if (!message?.trim()) throw new Error('Message cannot be empty')
     if (message.length > 1000) throw new Error('Message must be under 1000 characters')
