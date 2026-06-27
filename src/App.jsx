@@ -16,6 +16,7 @@ const MatchmakerPage = React.lazy(() => import('./pages/MatchmakerPage'))
 const MapPage = React.lazy(() => import('./pages/MapPage'))
 const NetworkGraph = React.lazy(() => import('./pages/NetworkGraph'))
 const LandingPage = React.lazy(() => import('./pages/LandingPage'))
+const Walkthrough = React.lazy(() => import('./pages/Walkthrough'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -175,6 +176,13 @@ function AppRoutes() {
             </div>
           </div>
         </AdminRoute>
+      } />
+      <Route path="/walkthrough" element={
+        <ErrorBoundary>
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><PawLoader /></div>}>
+            <Walkthrough />
+          </Suspense>
+        </ErrorBoundary>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

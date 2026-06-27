@@ -2,7 +2,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
+let GEMINI_MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash'
+if (GEMINI_MODEL === 'gemini-2.5-flash') {
+  GEMINI_MODEL = 'gemini-1.5-flash'
+}
 
 function sanitizeForPrompt(str: string) {
   return String(str || '').replace(/[`<>]/g, '').slice(0, 500)
@@ -131,14 +134,14 @@ if (!GEMINI_API_KEY) {
         }
       }
 
-      // Database-backed Atomic Rate Limiting (60 seconds per user)
+      // Database-backed Atomic Rate Limiting (5 seconds per user)
       const { data: allowed, error: limitError } = await supabaseAdmin.rpc(
         'check_and_increment_rate_limit',
-        { p_user_id: user.id, p_limit_seconds: 60, p_max_calls: 1 }
+        { p_user_id: user.id, p_limit_seconds: 5, p_max_calls: 1 }
       )
 
       if (limitError || !allowed) {
-        return new Response(JSON.stringify({ error: 'Rate limited. Please wait 60 seconds.' }), { 
+        return new Response(JSON.stringify({ error: 'Rate limited. Please wait 5 seconds.' }), { 
           status: 429, 
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         })

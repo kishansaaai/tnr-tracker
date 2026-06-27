@@ -105,7 +105,7 @@ function HeroDiorama() {
 
 export function Hero() {
   return (
-    <section className="relative pt-28 md:pt-36 pb-20 px-6">
+    <section id="mission" className="relative pt-28 md:pt-36 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <div className="text-center">
@@ -128,6 +128,10 @@ export function Hero() {
                   boxShadow: "var(--shadow-glow-amber)",
                 }}>
                 <PawIcon size={18} /> Get Started
+              </Link>
+              <Link to="/walkthrough"
+                className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold glass-strong lift-on-hover">
+                See the working
               </Link>
               <Link to="/auth"
                 className="inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold glass-strong lift-on-hover">

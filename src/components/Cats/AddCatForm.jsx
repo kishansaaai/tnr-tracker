@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '../UI/Button'
 import { getRandomCat } from '../../lib/catApi'
 import { supabase } from '../../lib/supabase'
+import { analyseCatPhoto } from '../../lib/gemini'
 
 /**
  * Component providing a form to log new community cats.
@@ -42,17 +43,9 @@ export function AddCatForm({ onAdd, uploading, setUploading }) {
     reader.onloadend = async () => {
       try {
         const base64Data = reader.result.split(',')[1]
-        const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-          body: {
-            action: 'analyze_photo',
-            imageBase64: base64Data,
-            mimeType: file.type
-          }
-        })
+        const textResult = await analyseCatPhoto(base64Data, file.type)
         
-        if (error) throw error
-        
-        const jsonStr = data.text.replace(/```json/gi, '').replace(/```/g, '').trim()
+        const jsonStr = textResult.replace(/```json/gi, '').replace(/```/g, '').trim()
         const result = JSON.parse(jsonStr)
 
         if (result.has_ear_tip) {

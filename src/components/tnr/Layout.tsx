@@ -3,10 +3,18 @@ import { PawIcon, Reveal } from "./Decorative";
 import catSleeping from "@/assets/cat-sleeping.png";
 
 export function Navbar() {
+  const handleScroll = (e, id) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <header className="fixed top-4 inset-x-0 z-50 px-4">
       <nav className="mx-auto max-w-5xl glass-strong rounded-full px-5 py-3 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 font-display font-bold">
+        <a href="#" className="flex items-center gap-2 font-display font-bold" onClick={(e) => handleScroll(e, "mission")}>
           <span className="grid place-items-center h-8 w-8 rounded-full"
             style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}>
             <PawIcon size={16} className="text-white" />
@@ -14,9 +22,8 @@ export function Navbar() {
           <span className="hidden sm:inline">TNR Tracker</span>
         </a>
         <div className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-          <a href="#mission" className="hover:text-foreground transition-colors">Mission</a>
-          <a href="#join" className="hover:text-foreground transition-colors">Newsletter</a>
+          <a href="#features" className="hover:text-foreground transition-colors" onClick={(e) => handleScroll(e, "features")}>Features</a>
+          <a href="#join" className="hover:text-foreground transition-colors" onClick={(e) => handleScroll(e, "join")}>Newsletter</a>
         </div>
         <Link to="/auth" className="text-sm font-semibold rounded-full px-4 py-1.5"
           style={{ background: "var(--amber)", color: "#1f2937" }}>

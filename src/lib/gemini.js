@@ -1,34 +1,173 @@
 import { supabase } from './supabase'
 
 export async function analyseColonyHealth({ colony, cats, updates }) {
-  const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-    body: { action: 'health_report', colony, cats, updates }
-  })
+  // 1. Try invoking the hosted Supabase Edge Function first
+  try {
+    const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+      body: { action: 'health_report', colony, cats, updates }
+    })
 
-  if (error) {
-    let msg = error.message || 'Failed to fetch analysis from Edge Function.'
-    if (error.context) {
-      try {
-        // Parse JSON error response if possible
-        const body = await error.context.clone().json()
-        if (body?.error) {
-          msg = body.error
-        }
-      } catch (e) {
-        try {
-          const text = await error.context.clone().text()
-          if (text) msg = text
-        } catch (t_err) {}
-      }
+    if (!error && data?.text) {
+      return data.text
     }
-    throw new Error(msg)
+    console.warn("Edge Function returned error or empty response. Falling back to direct Gemini API call...", error)
+  } catch (e) {
+    console.warn("Edge Function invocation failed. Falling back to direct Gemini API call...", e)
   }
 
-  if (!data?.text) {
-    throw new Error('Edge Function returned an empty report.')
+  // 2. Direct Fallback using VITE_GEMINI_API_KEY from environment variables
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
+  if (model === 'gemini-2.5-flash') {
+    model = 'gemini-1.5-flash'
   }
 
-  return data.text
+  if (!apiKey) {
+    throw new Error('Analysis failed: both hosted Edge Function and local direct API key are unavailable.')
+  }
+
+  const promptText = `System Instruction: You help TNR volunteers manage community cat colonies humanely and effectively. Always be practical, specific, and encouraging.
+
+You are a compassionate and experienced TNR (Trap-Neuter-Return) coordinator assistant. Analyze the following colony data and provide a structured health report.
+
+Colony Name: ${colony.name || ''}
+Status: ${colony.status || ''}
+Description: ${colony.description || 'No description provided'}
+Total Cats: ${cats.length}
+Neutered: ${cats.filter(c => c.neutered).length}
+
+Cat List:
+${cats.map(cat => `- ${cat.name || 'Unnamed'} (${cat.gender}, ${cat.neutered ? 'neutered' : 'not neutered'}${cat.health_notes ? `, notes: ${cat.health_notes}` : ''})`).join('\n') || 'No cats logged yet.'}
+
+Recent Activity (last 10 updates):
+${updates.slice(0, 10).map(update => `- ${new Date(update.created_at).toLocaleDateString()}: ${update.message}`).join('\n') || 'No recent activity.'}
+
+Please provide a structured report with EXACTLY these four sections, each clearly labeled:
+
+## Colony Status Summary
+Brief overview of the colony's current state and management level.
+
+## Health Concerns
+Any health issues noted, patterns in health notes, and general welfare assessment.
+
+## Neutering Progress
+Analysis of the TNR progress, percentage neutered, and what that means for colony stabilization.
+
+## Recommended Next Steps
+Specific, actionable recommendations for the volunteers managing this colony.
+
+Be practical, compassionate, and specific. Use the actual data provided.`
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{ text: promptText }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 1500,
+        },
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}))
+    throw new Error(errData.error?.message || 'Direct Gemini API request failed')
+  }
+
+  const resData = await response.json()
+  const text = resData.candidates?.[0]?.content?.parts
+    ?.map(part => part.text || '')
+    .join('')
+    .trim()
+
+  if (!text) {
+    throw new Error('Gemini returned an empty report.')
+  }
+
+  return text
+}
+
+export async function analyseCatPhoto(imageBase64, mimeType) {
+  // 1. Try invoking the hosted Supabase Edge Function first
+  try {
+    const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+      body: {
+        action: 'analyze_photo',
+        imageBase64,
+        mimeType
+      }
+    })
+
+    if (!error && data?.text) {
+      return data.text
+    }
+    console.warn("Edge Function returned error. Falling back to direct Gemini API call...", error)
+  } catch (e) {
+    console.warn("Edge Function invocation failed. Falling back to direct Gemini API call...", e)
+  }
+
+  // 2. Direct Fallback using VITE_GEMINI_API_KEY
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
+  if (model === 'gemini-2.5-flash') {
+    model = 'gemini-1.5-flash'
+  }
+
+  if (!apiKey) {
+    throw new Error('Analysis failed: both hosted Edge Function and local direct API key are unavailable.')
+  }
+
+  const promptText = `System Instruction: You are an expert feline veterinarian and TNR specialist. You strictly reply in JSON format. Only return the raw JSON object, without any markdown formatting.
+
+Analyze this cat photo. Is the ear tipped or clipped (universal sign of a TNR neutered cat)? What is the breed or coat pattern? Respond ONLY with a valid JSON object in this format: {"has_ear_tip": boolean, "breed": "string", "reason": "brief explanation"}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [
+            { text: promptText },
+            { inlineData: { mimeType: mimeType || 'image/jpeg', data: imageBase64 } }
+          ]
+        }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 500,
+        },
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}))
+    throw new Error(errData.error?.message || 'Direct Gemini API request failed')
+  }
+
+  const resData = await response.json()
+  const text = resData.candidates?.[0]?.content?.parts
+    ?.map(part => part.text || '')
+    .join('')
+    .trim()
+
+  if (!text) {
+    throw new Error('Gemini returned an empty response.')
+  }
+
+  return text
 }
 
 export function parseHealthReport(text) {

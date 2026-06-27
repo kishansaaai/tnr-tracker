@@ -1,4 +1,19 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Whisker Rescue — Warm, nature-inspired cat rescue theme.
+ *
+ * Palette
+ *   Forest #2d6a4f · Sage #52b788 · Mint #b7e4c7
+ *   Amber  #f4a261 · Coral #e76f51 · Cream #fefae0
+ *
+ * All colors expressed in oklch. Semantic tokens map to Tailwind utilities
+ * via @theme inline (e.g. bg-primary, text-forest, border-sage).
+ */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -7,6 +22,10 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --radius-pill: 9999px;
+
+  /* Semantic shadcn tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -26,146 +45,242 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand palette as first-class utilities */
   --color-forest: var(--forest);
   --color-sage: var(--sage);
   --color-mint: var(--mint);
-  --color-amber: var(--amber);
+  --color-amber-warm: var(--amber-warm);
   --color-coral: var(--coral);
   --color-cream: var(--cream);
-  --color-stone: var(--stone);
-  --font-display: "Fredoka", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+
+  --font-display: "Fredoka", "Fredoka Variable", system-ui, sans-serif;
+  --font-sans: "Inter", "Inter Variable", system-ui, sans-serif;
+
+  --animate-float-y: float-y 6s ease-in-out infinite;
 }
 
 :root {
   --radius: 1rem;
 
-  --forest: #2d6a4f;
-  --sage: #52b788;
-  --mint: #b7e4c7;
-  --amber: #f4a261;
-  --coral: #e76f51;
-  --cream: #fefae0;
-  --stone: #6b7280;
+  /* Brand */
+  --forest: oklch(0.504 0.082 153);      /* #2d6a4f */
+  --sage: oklch(0.713 0.123 153);        /* #52b788 */
+  --mint: oklch(0.896 0.062 154);        /* #b7e4c7 */
+  --amber-warm: oklch(0.762 0.137 60);   /* #f4a261 */
+  --coral: oklch(0.683 0.158 33);        /* #e76f51 */
+  --cream: oklch(0.984 0.027 100);       /* #fefae0 */
 
-  --background: #f8fafc;
-  --foreground: #1f2937;
-  --card: #ffffff;
-  --card-foreground: #1f2937;
-  --popover: #ffffff;
-  --popover-foreground: #1f2937;
+  /* Gradients */
+  --gradient-warm: linear-gradient(135deg, var(--amber-warm), var(--coral));
+  --gradient-forest: linear-gradient(135deg, var(--forest), var(--sage));
+  --gradient-mint: linear-gradient(180deg, var(--cream), var(--mint));
+
+  /* Shadows */
+  --shadow-card: 0 10px 30px -12px rgba(45, 106, 79, 0.18);
+  --shadow-card-lg: 0 20px 50px -18px rgba(45, 106, 79, 0.28);
+  --shadow-warm-glow: 0 12px 30px -8px rgba(244, 162, 97, 0.45);
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(45, 106, 79, 0.18);
+
+  /* Semantic mapping */
+  --background: var(--cream);
+  --foreground: oklch(0.28 0.04 153);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.28 0.04 153);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.28 0.04 153);
   --primary: var(--forest);
-  --primary-foreground: #ffffff;
-  --secondary: var(--mint);
-  --secondary-foreground: var(--forest);
-  --muted: #f1f5f9;
-  --muted-foreground: var(--stone);
-  --accent: var(--amber);
-  --accent-foreground: #1f2937;
+  --primary-foreground: var(--cream);
+  --secondary: var(--sage);
+  --secondary-foreground: oklch(0.18 0.03 153);
+  --muted: var(--mint);
+  --muted-foreground: oklch(0.42 0.05 153);
+  --accent: var(--amber-warm);
+  --accent-foreground: oklch(0.22 0.05 60);
   --destructive: var(--coral);
-  --destructive-foreground: #ffffff;
-  --border: rgba(45, 106, 79, 0.12);
-  --input: rgba(45, 106, 79, 0.18);
+  --destructive-foreground: var(--cream);
+  --border: oklch(0.85 0.04 153);
+  --input: oklch(0.9 0.03 153);
   --ring: var(--sage);
+  --chart-1: var(--forest);
+  --chart-2: var(--sage);
+  --chart-3: var(--mint);
+  --chart-4: var(--amber-warm);
+  --chart-5: var(--coral);
+  --sidebar: oklch(0.98 0.02 100);
+  --sidebar-foreground: oklch(0.28 0.04 153);
+  --sidebar-primary: var(--forest);
+  --sidebar-primary-foreground: var(--cream);
+  --sidebar-accent: var(--mint);
+  --sidebar-accent-foreground: oklch(0.28 0.04 153);
+  --sidebar-border: oklch(0.85 0.04 153);
+  --sidebar-ring: var(--sage);
+}
 
-  --shadow-soft: 0 4px 20px -6px rgba(45, 106, 79, 0.15);
-  --shadow-card: 0 20px 40px -16px rgba(45, 106, 79, 0.22);
-  --shadow-glow-amber: 0 12px 36px -10px rgba(244, 162, 97, 0.55);
-  --shadow-glow-sage: 0 12px 36px -10px rgba(82, 183, 136, 0.5);
+.dark {
+  --background: oklch(0.22 0.03 153);
+  --foreground: var(--cream);
+  --card: oklch(0.28 0.04 153);
+  --card-foreground: var(--cream);
+  --popover: oklch(0.28 0.04 153);
+  --popover-foreground: var(--cream);
+  --primary: var(--sage);
+  --primary-foreground: oklch(0.18 0.03 153);
+  --secondary: var(--forest);
+  --secondary-foreground: var(--cream);
+  --muted: oklch(0.32 0.04 153);
+  --muted-foreground: oklch(0.78 0.04 153);
+  --accent: var(--amber-warm);
+  --accent-foreground: oklch(0.18 0.03 153);
+  --destructive: var(--coral);
+  --destructive-foreground: var(--cream);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--sage);
+  --glass-bg: rgba(45, 106, 79, 0.35);
+  --glass-border: rgba(183, 228, 199, 0.2);
+  --shadow-card: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+  --shadow-card-lg: 0 20px 50px -18px rgba(0, 0, 0, 0.6);
+  --sidebar: oklch(0.28 0.04 153);
+  --sidebar-foreground: var(--cream);
+  --sidebar-primary: var(--sage);
+  --sidebar-primary-foreground: oklch(0.18 0.03 153);
+  --sidebar-accent: oklch(0.32 0.04 153);
+  --sidebar-accent-foreground: var(--cream);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--sage);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; }
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
   body {
-    background-color: var(--color-background);
+    background: var(--gradient-mint);
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); color: var(--forest); letter-spacing: -0.02em; }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    color: var(--forest);
+  }
 }
 
-@utility glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(45, 106, 79, 0.1);
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
-@utility glass-strong {
-  background: #ffffff;
-  border: 1px solid rgba(45, 106, 79, 0.1);
-  box-shadow: var(--shadow-card);
+/* ===== Brand utilities ===== */
+
+@utility bg-gradient-warm {
+  background-image: var(--gradient-warm);
+}
+@utility bg-gradient-forest {
+  background-image: var(--gradient-forest);
+}
+@utility bg-gradient-mint {
+  background-image: var(--gradient-mint);
 }
 
 @utility text-gradient-warm {
-  background: linear-gradient(135deg, var(--amber), var(--coral));
+  background-image: var(--gradient-warm);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 @utility text-gradient-forest {
-  background: linear-gradient(135deg, var(--forest), var(--sage));
+  background-image: var(--gradient-forest);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-@utility lift-on-hover {
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s;
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
 }
-.lift-on-hover:hover {
-  transform: translateY(-6px) scale(1.02);
+@utility shadow-card-lg {
+  box-shadow: var(--shadow-card-lg);
+}
+@utility shadow-warm-glow {
+  box-shadow: var(--shadow-warm-glow);
+}
+
+@utility glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--glass-border);
+}
+
+@utility glass-strong {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-card);
 }
 
-@utility section-cream {
-  background: var(--cream);
-}
-@utility section-mint {
-  background: linear-gradient(180deg, #ffffff, var(--mint) 200%);
-}
-
-@keyframes pulse-pin {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.15); opacity: 0.75; }
-}
-@keyframes float-y {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes paw-walk {
-  0% { transform: translateX(-10vw) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.35; }
-  90% { opacity: 0.35; }
-  100% { transform: translateX(110vw) rotate(360deg); opacity: 0; }
-}
-@keyframes scan-line {
-  0% { top: 0%; }
-  100% { top: 100%; }
-}
-@keyframes dash-flow {
-  to { stroke-dashoffset: -40; }
-}
-@keyframes ring-pulse {
-  0% { transform: scale(0.8); opacity: 0.7; }
-  100% { transform: scale(2); opacity: 0; }
+@utility glass-card {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow-card);
 }
 
-.animate-pulse-pin { animation: pulse-pin 2.4s ease-in-out infinite; }
-.animate-float-y { animation: float-y 5s ease-in-out infinite; }
-.animate-scan-line { animation: scan-line 2.2s linear infinite; }
-.animate-dash-flow { stroke-dasharray: 8 6; animation: dash-flow 1.5s linear infinite; }
-.animate-ring-pulse { animation: ring-pulse 2s ease-out infinite; }
+@utility lift-on-hover {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-lg);
+  }
+}
 
-@keyframes cat-idle {
-  0%, 100% { transform: rotateY(-6deg) rotateX(4deg) translateY(0); }
-  50%      { transform: rotateY(6deg)  rotateX(-2deg) translateY(-6px); }
+@utility btn-warm {
+  background-image: var(--gradient-warm);
+  color: var(--cream);
+  border-radius: 9999px;
+  box-shadow: var(--shadow-warm-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px -8px rgba(244, 162, 97, 0.55);
+  }
 }
-@keyframes cat-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+
+@utility float-y {
+  animation: float-y 6s ease-in-out infinite;
 }
+
+/* ===== Custom App Overrides & Leaflet Styles ===== */
 
 /* Leaflet overrides */
 .leaflet-container {
@@ -207,3 +322,25 @@
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
 ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+
+/* Custom keyframes & animations */
+@keyframes pulse-pin {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.75; }
+}
+@keyframes scan-line {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+@keyframes dash-flow {
+  to { stroke-dashoffset: -40; }
+}
+@keyframes ring-pulse {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.animate-pulse-pin { animation: pulse-pin 2.4s ease-in-out infinite; }
+.animate-scan-line { animation: scan-line 2.2s linear infinite; }
+.animate-dash-flow { stroke-dasharray: 8 6; animation: dash-flow 1.5s linear infinite; }
+.animate-ring-pulse { animation: ring-pulse 2s ease-out infinite; }
