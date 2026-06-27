@@ -185,6 +185,11 @@ Real-time organizational telemetry.
   * Uses the **Gemini 2.5 Flash Vision API** to analyze the photo, explicitly identifying if the cat has an ear-tip (the universal TNR marker) and guessing the breed/coat pattern.
   * Automatically toggles the "Neutered" checkbox in the UI if an ear-tip is successfully detected by the AI.
 
+### 2.10 Volunteer Walkthrough Odyssey (`Walkthrough.jsx`)
+* **UX Design:** A interactive story-based walkthrough page accessible at `/walkthrough` showcasing the features, database logic, and engineering decisions.
+* **Timeline Engine:** Renders ten distinct chapters following volunteer "Alex" through a week of TNR work: authentication, heatmaps, TSP trap optimization, vision AI intake, recovery dashboard, foster/adoption Kanban pipelines, and the matchmaker quiz.
+* **Secure Client Fallback**: Implements client-side fallback handlers that call the Gemini API directly from the browser (bypassing hosted edge-function rate limits or API schema errors) if database rate limiting is triggered.
+
 ---
 
 ## 🗄️ 3. Database Architecture & Hooks
@@ -229,11 +234,17 @@ To test the extreme scaling architectures (like the Graph Hierarchical Drilldown
 
 ## 🎨 5. CSS & Styling Philosophy
 
-Our design system prioritizes a **Modern Emerald & Glassmorphism** aesthetic.
+Our design system implements the custom **Whisker Woods Theme**—a warm, nature-inspired cat rescue aesthetic.
 
-* **Colors:** We explicitly purged Tailwind's default blues and purples in favor of a strictly curated Emerald (`#10b981`), Amber (`#f59e0b`), and Rose (`#f43f5e`) palette to invoke nature, caution, and veterinary care.
-* **Glassmorphism:** Widely used `bg-white/90 backdrop-blur-md` across the Navbar, Map Toolbars, and Graph Sidebars to allow the data visualizations beneath to bleed through beautifully.
-* **Typography:** Enforced standard sans-serif with aggressive font-weight contrasts (`font-black` for headers, `tracking-widest uppercase` for sub-labels).
+* **Color Palette (oklch-based):**
+  * `Forest (#2d6a4f)`: Primary brand color, headings, dark accents.
+  * `Sage (#52b788)`: Secondary green, borders, soft highlights.
+  * `Mint (#b7e4c7)`: Light green gradients and ambient glows.
+  * `Amber (#f4a261)`: Warm CTA highlights.
+  * `Coral (#e76f51)`: Action highlights and rosy gradients.
+  * `Cream (#fefae0)`: Page background base.
+* **Typography:** Enforces `Fredoka` (a rounded, playful sans-serif) for headings and brand elements, and `Inter` (a clean, highly legible sans-serif) for body copy.
+* **Custom Brand Classes:** Avoids utility limitations by defining standard CSS rules for `.bg-gradient-warm`, `.shadow-warm-glow`, `.glass`, `.glass-strong`, and `.lift-on-hover` in `index.css` to guarantee compile-time inclusion and cross-browser rendering.
 
 ---
 
