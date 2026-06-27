@@ -86,6 +86,7 @@
   /* #b7e4c7 */
   --amber-warm: oklch(0.762 0.137 60);
   /* #f4a261 */
+  --amber: var(--amber-warm);
   --coral: oklch(0.683 0.158 33);
   /* #e76f51 */
   --cream: oklch(0.984 0.027 100);
@@ -219,89 +220,89 @@
 
 /* ===== Brand utilities ===== */
 
-@utility bg-gradient-warm {
-  background-image: var(--gradient-warm);
+.bg-gradient-warm {
+  background: var(--gradient-warm) !important;
 }
 
-@utility bg-gradient-forest {
-  background-image: var(--gradient-forest);
+.bg-gradient-forest {
+  background: var(--gradient-forest) !important;
 }
 
-@utility bg-gradient-mint {
-  background-image: var(--gradient-mint);
+.bg-gradient-mint {
+  background: var(--gradient-mint) !important;
 }
 
-@utility text-gradient-warm {
-  background-image: var(--gradient-warm);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.text-gradient-warm {
+  background: var(--gradient-warm) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
 }
 
-@utility text-gradient-forest {
-  background-image: var(--gradient-forest);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.text-gradient-forest {
+  background: var(--gradient-forest) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
 }
 
-@utility shadow-card {
-  box-shadow: var(--shadow-card);
+.shadow-card {
+  box-shadow: var(--shadow-card) !important;
 }
 
-@utility shadow-card-lg {
-  box-shadow: var(--shadow-card-lg);
+.shadow-card-lg {
+  box-shadow: var(--shadow-card-lg) !important;
 }
 
-@utility shadow-warm-glow {
-  box-shadow: var(--shadow-warm-glow);
+.shadow-warm-glow {
+  box-shadow: var(--shadow-warm-glow) !important;
 }
 
-@utility glass {
-  background-color: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid var(--glass-border);
+.glass {
+  background-color: var(--glass-bg) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  border: 1px solid var(--glass-border) !important;
 }
 
-@utility glass-strong {
-  background-color: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-card);
+.glass-strong {
+  background-color: var(--glass-bg) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
-@utility glass-card {
-  background-color: var(--glass-bg);
-  backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid var(--glass-border);
-  border-radius: 1.5rem;
-  box-shadow: var(--shadow-card);
+.glass-card {
+  background-color: var(--glass-bg) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
-@utility lift-on-hover {
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-card-lg);
-  }
+.lift-on-hover {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease !important;
 }
 
-@utility btn-warm {
-  background-image: var(--gradient-warm);
-  color: var(--cream);
-  border-radius: 9999px;
-  box-shadow: var(--shadow-warm-glow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 36px -8px rgba(244, 162, 97, 0.55);
-  }
+.lift-on-hover:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-card-lg) !important;
 }
 
-@utility float-y {
-  animation: float-y 6s ease-in-out infinite;
+.btn-warm {
+  background: var(--gradient-warm) !important;
+  color: var(--cream) !important;
+  border-radius: 9999px !important;
+  box-shadow: var(--shadow-warm-glow) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.btn-warm:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 16px 36px -8px rgba(244, 162, 97, 0.55) !important;
+}
+
+.float-y {
+  animation: float-y 6s ease-in-out infinite !important;
 }
 
 /* ===== Custom App Overrides & Leaflet Styles ===== */
