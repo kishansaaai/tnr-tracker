@@ -2,6 +2,8 @@
 
 ![TNR Tracker](https://img.shields.io/badge/Status-Active-brightgreen) ![React](https://img.shields.io/badge/React-18-blue) ![Supabase](https://img.shields.io/badge/Supabase-Database-emerald) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8) ![Vite](https://img.shields.io/badge/Vite-Bundler-yellow)
 
+🌐 **Live Production Deployment:** [https://tnr-tracker.vercel.app](https://tnr-tracker.vercel.app)
+
 **TNR Tracker** is an interactive, responsive web application designed to help community cat programs log colonies, coordinate trapping, manage post-op recovery pipelines, and match rescue cats with prospective adopters.
 
 This document serves as the technical manual, detailing features, UI implementation, custom hooks, and architectural design decisions.
