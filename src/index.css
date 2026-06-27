@@ -78,12 +78,18 @@
   --radius: 1rem;
 
   /* Brand */
-  --forest: oklch(0.504 0.082 153);      /* #2d6a4f */
-  --sage: oklch(0.713 0.123 153);        /* #52b788 */
-  --mint: oklch(0.896 0.062 154);        /* #b7e4c7 */
-  --amber-warm: oklch(0.762 0.137 60);   /* #f4a261 */
-  --coral: oklch(0.683 0.158 33);        /* #e76f51 */
-  --cream: oklch(0.984 0.027 100);       /* #fefae0 */
+  --forest: oklch(0.504 0.082 153);
+  /* #2d6a4f */
+  --sage: oklch(0.713 0.123 153);
+  /* #52b788 */
+  --mint: oklch(0.896 0.062 154);
+  /* #b7e4c7 */
+  --amber-warm: oklch(0.762 0.137 60);
+  /* #f4a261 */
+  --coral: oklch(0.683 0.158 33);
+  /* #e76f51 */
+  --cream: oklch(0.984 0.027 100);
+  /* #fefae0 */
 
   /* Gradients */
   --gradient-warm: linear-gradient(135deg, var(--amber-warm), var(--coral));
@@ -187,7 +193,12 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
     color: var(--forest);
@@ -195,8 +206,15 @@
 }
 
 @keyframes float-y {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
 }
 
 /* ===== Brand utilities ===== */
@@ -204,9 +222,11 @@
 @utility bg-gradient-warm {
   background-image: var(--gradient-warm);
 }
+
 @utility bg-gradient-forest {
   background-image: var(--gradient-forest);
 }
+
 @utility bg-gradient-mint {
   background-image: var(--gradient-mint);
 }
@@ -228,9 +248,11 @@
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }
+
 @utility shadow-card-lg {
   box-shadow: var(--shadow-card-lg);
 }
+
 @utility shadow-warm-glow {
   box-shadow: var(--shadow-warm-glow);
 }
@@ -258,6 +280,7 @@
 
 @utility lift-on-hover {
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-card-lg);
@@ -270,6 +293,7 @@
   border-radius: 9999px;
   box-shadow: var(--shadow-warm-glow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 16px 36px -8px rgba(244, 162, 97, 0.55);
@@ -291,7 +315,7 @@
 
 .leaflet-popup-content-wrapper {
   border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Custom colony marker */
@@ -301,14 +325,19 @@
   justify-content: center;
   border-radius: 50%;
   border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   font-size: 14px;
 }
 
 /* Skeleton animation */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton {
@@ -319,28 +348,75 @@
 }
 
 /* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
 
 /* Custom keyframes & animations */
 @keyframes pulse-pin {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.15); opacity: 0.75; }
-}
-@keyframes scan-line {
-  0% { top: 0%; }
-  100% { top: 100%; }
-}
-@keyframes dash-flow {
-  to { stroke-dashoffset: -40; }
-}
-@keyframes ring-pulse {
-  0% { transform: scale(0.8); opacity: 0.7; }
-  100% { transform: scale(2); opacity: 0; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
 }
 
-.animate-pulse-pin { animation: pulse-pin 2.4s ease-in-out infinite; }
-.animate-scan-line { animation: scan-line 2.2s linear infinite; }
-.animate-dash-flow { stroke-dasharray: 8 6; animation: dash-flow 1.5s linear infinite; }
-.animate-ring-pulse { animation: ring-pulse 2s ease-out infinite; }
+@keyframes scan-line {
+  0% {
+    top: 0%;
+  }
+
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes ring-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-pin {
+  animation: pulse-pin 2.4s ease-in-out infinite;
+}
+
+.animate-scan-line {
+  animation: scan-line 2.2s linear infinite;
+}
+
+.animate-dash-flow {
+  stroke-dasharray: 8 6;
+  animation: dash-flow 1.5s linear infinite;
+}
+
+.animate-ring-pulse {
+  animation: ring-pulse 2s ease-out infinite;
+}

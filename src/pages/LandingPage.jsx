@@ -6,7 +6,7 @@ import { Features } from "@/components/tnr/Features";
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f8fafc]">
+    <div className="relative min-h-screen overflow-x-hidden">
       <FloatingPaws />
       <Navbar />
       <main>
