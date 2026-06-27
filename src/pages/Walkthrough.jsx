@@ -232,16 +232,13 @@ export default function Walkthrough() {
     <main className="relative min-h-screen overflow-hidden section-mint pb-20">
       {/* Ambient glows */}
       <div
-        className="pointer-events-none absolute -top-32 -left-24 w-[480px] h-[480px] rounded-full blur-3xl opacity-50"
-        style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}
+        className="pointer-events-none absolute -top-32 -left-24 w-[480px] h-[480px] rounded-full blur-3xl opacity-50 bg-gradient-warm"
       />
       <div
-        className="pointer-events-none absolute top-1/3 -right-32 w-[520px] h-[520px] rounded-full blur-3xl opacity-40"
-        style={{ background: "linear-gradient(135deg, var(--forest), var(--sage))" }}
+        className="pointer-events-none absolute top-1/3 -right-32 w-[520px] h-[520px] rounded-full blur-3xl opacity-40 bg-gradient-forest"
       />
       <div
-        className="pointer-events-none absolute bottom-0 left-1/4 w-[420px] h-[420px] rounded-full blur-3xl opacity-30"
-        style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}
+        className="pointer-events-none absolute bottom-0 left-1/4 w-[420px] h-[420px] rounded-full blur-3xl opacity-30 bg-gradient-warm"
       />
 
       {/* Scattered paws */}
@@ -253,8 +250,7 @@ export default function Walkthrough() {
       <header className="relative z-10 max-w-6xl mx-auto px-6 pt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="w-11 h-11 rounded-2xl grid place-items-center shadow-glow-amber"
-            style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}
+            className="w-11 h-11 rounded-2xl grid place-items-center bg-gradient-warm shadow-warm-glow"
           >
             <PawIcon className="w-6 h-6 text-white" />
           </div>
@@ -269,8 +265,7 @@ export default function Walkthrough() {
         </div>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-white font-medium shadow-glow-amber hover:opacity-95 transition"
-          style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}
+          className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-white font-medium shadow-warm-glow hover:opacity-95 transition bg-gradient-warm"
         >
           Go Back Home <ArrowRight className="w-4 h-4" />
         </Link>
@@ -295,8 +290,7 @@ export default function Walkthrough() {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <a
             href="#chapter-1"
-            className="inline-flex items-center gap-2 h-12 px-7 rounded-full text-white font-semibold shadow-glow-amber hover:opacity-95 transition"
-            style={{ background: "linear-gradient(135deg, var(--amber), var(--coral))" }}
+            className="inline-flex items-center gap-2 h-12 px-7 rounded-full text-white font-semibold shadow-warm-glow hover:opacity-95 transition bg-gradient-warm"
           >
             <PawIcon className="w-5 h-5" /> Begin chapter one
           </a>
@@ -421,8 +415,7 @@ export default function Walkthrough() {
       {/* Architecture */}
       <section id="architecture" className="relative z-10 max-w-5xl mx-auto px-6 pb-24">
         <div
-          className="relative rounded-3xl p-8 md:p-10 shadow-card text-white overflow-hidden"
-          style={{ background: "linear-gradient(135deg, var(--forest), var(--sage))" }}
+          className="relative rounded-3xl p-8 md:p-10 shadow-card text-white overflow-hidden bg-gradient-forest"
         >
           <PawIcon className="absolute -top-8 -right-8 w-56 text-white/10" />
           <PawIcon className="absolute -bottom-10 -left-6 w-40 text-white/10" />

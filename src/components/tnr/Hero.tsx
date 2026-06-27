@@ -122,11 +122,7 @@ export function Hero() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link to="/auth"
-                className="group inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-primary-foreground lift-on-hover"
-                style={{
-                  background: "linear-gradient(135deg, var(--amber), var(--coral))",
-                  boxShadow: "var(--shadow-glow-amber)",
-                }}>
+                className="group inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold text-white lift-on-hover bg-gradient-warm shadow-warm-glow">
                 <PawIcon size={18} /> Get Started
               </Link>
               <Link to="/walkthrough"
