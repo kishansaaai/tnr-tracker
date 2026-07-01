@@ -336,10 +336,7 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    CASE 
-      WHEN NEW.email LIKE '%admin%' OR NEW.email LIKE '%judge%' OR NEW.email LIKE '%demo%' THEN 'admin'
-      ELSE 'volunteer'
-    END
+    'volunteer'
   );
   RETURN NEW;
 END;

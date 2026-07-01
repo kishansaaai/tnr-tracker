@@ -294,6 +294,22 @@ export default function Auth() {
                 )}
               </button>
             </Field>
+            
+            {mode === "signin" && (
+              <div className="flex justify-end pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('judge-demo@tnrtracker.app')
+                    setPassword('TNRDemo2026!')
+                  }}
+                  className="text-xs font-semibold hover:underline cursor-pointer"
+                  style={{ color: "var(--coral)" }}
+                >
+                  🐾 Use Judge Demo Login
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"
