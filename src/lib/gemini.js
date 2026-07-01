@@ -1,31 +1,6 @@
 import { supabase } from './supabase'
 
 export async function analyseColonyHealth({ colony, cats, updates }) {
-  // 1. Try invoking the hosted Supabase Edge Function first
-  try {
-    const { data, error } = await supabase.functions.invoke('gemini-proxy', {
-      body: { action: 'health_report', colony, cats, updates }
-    })
-
-    if (!error && data?.text) {
-      return data.text
-    }
-    console.warn("Edge Function returned error or empty response. Falling back to direct Gemini API call...", error)
-  } catch (e) {
-    console.warn("Edge Function invocation failed. Falling back to direct Gemini API call...", e)
-  }
-
-  // 2. Direct Fallback using VITE_GEMINI_API_KEY from environment variables
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
-  if (model === 'gemini-2.5-flash') {
-    model = 'gemini-1.5-flash'
-  }
-
-  if (!apiKey) {
-    throw new Error('Analysis failed: both hosted Edge Function and local direct API key are unavailable.')
-  }
-
   const promptText = `System Instruction: You help TNR volunteers manage community cat colonies humanely and effectively. Always be practical, specific, and encouraging.
 
 You are a compassionate and experienced TNR (Trap-Neuter-Return) coordinator assistant. Analyze the following colony data and provide a structured health report.
@@ -57,6 +32,67 @@ Analysis of the TNR progress, percentage neutered, and what that means for colon
 Specific, actionable recommendations for the volunteers managing this colony.
 
 Be practical, compassionate, and specific. Use the actual data provided.`
+
+  // 1. Try Groq API first if VITE_GROQ_API_KEY is present
+  const groqApiKey = import.meta.env.VITE_GROQ_API_KEY
+  const groqModel = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile'
+
+  if (groqApiKey) {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqApiKey}`
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [
+            {
+              role: 'user',
+              content: promptText
+            }
+          ],
+          temperature: 0.3
+        })
+      })
+
+      if (response.ok) {
+        const resData = await response.json()
+        const text = resData.choices?.[0]?.message?.content?.trim()
+        if (text) {
+          return text
+        }
+      } else {
+        const errData = await response.json().catch(() => ({}))
+        console.warn("Groq API request failed, falling back to Gemini...", errData.error?.message || response.statusText)
+      }
+    } catch (e) {
+      console.warn("Groq API invocation failed, falling back to Gemini...", e)
+    }
+  }
+
+  // 2. Try invoking the hosted Supabase Edge Function
+  try {
+    const { data, error } = await supabase.functions.invoke('gemini-proxy', {
+      body: { action: 'health_report', colony, cats, updates }
+    })
+
+    if (!error && data?.text) {
+      return data.text
+    }
+    console.warn("Edge Function returned error or empty response. Falling back to direct Gemini API call...", error)
+  } catch (e) {
+    console.warn("Edge Function invocation failed. Falling back to direct Gemini API call...", e)
+  }
+
+  // 3. Direct Fallback using VITE_GEMINI_API_KEY from environment variables
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash-latest'
+
+  if (!apiKey) {
+    throw new Error('Analysis failed: both Groq/hosted Edge Function and local direct API key are unavailable.')
+  }
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
@@ -116,10 +152,7 @@ export async function analyseCatPhoto(imageBase64, mimeType) {
 
   // 2. Direct Fallback using VITE_GEMINI_API_KEY
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
-  if (model === 'gemini-2.5-flash') {
-    model = 'gemini-1.5-flash'
-  }
+  let model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash-latest'
 
   if (!apiKey) {
     throw new Error('Analysis failed: both hosted Edge Function and local direct API key are unavailable.')
