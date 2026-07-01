@@ -77,6 +77,8 @@ export function computeRoute(traps) {
   }
 
   // 2-opt refinement using Haversine distance (max 200 iterations or delta < 0.0001)
+  // NOTE: This 2-opt loop has O(n³) scaling per improving pass and is capped at 200 iterations.
+  // It is intentionally suited for small volunteer route sizes (~<50 stops) to run efficiently on mobile.
   let bestDist = getRouteDistance(route)
   let improved = true
   let iterations = 0

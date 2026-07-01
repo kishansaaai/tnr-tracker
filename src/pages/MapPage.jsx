@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents, useMap, Circle, CircleMarker } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import 'leaflet/dist/leaflet.css'
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.css'
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css'
 import { useColonies } from '../hooks/useColonies'
 import { useTraps } from '../hooks/useTraps'
 import { useAllCats } from '../hooks/useCats'
@@ -170,22 +173,24 @@ export default function MapPage() {
           <MapClickHandler onMapClick={handleMapClick} isPlacingPin={!!pinMode} />
           <MapBoundsController colonies={colonies} loading={coloniesLoading} />
 
-          {colonies.map(colony => (
-            <Marker
-              key={colony.id}
-              position={[colony.lat, colony.lng]}
-              icon={createColonyIcon(colony.status)}
-              eventHandlers={{ click: () => setSelectedColony(colony) }}
-            />
-          ))}
+          <MarkerClusterGroup chunkedLoading maxClusterRadius={50}>
+            {colonies.map(colony => (
+              <Marker
+                key={colony.id}
+                position={[colony.lat, colony.lng]}
+                icon={createColonyIcon(colony.status)}
+                eventHandlers={{ click: () => setSelectedColony(colony) }}
+              />
+            ))}
 
-          {traps.map(trap => (
-            <Marker
-              key={trap.id}
-              position={[trap.lat, trap.lng]}
-              icon={createTrapIcon(trap.status)}
-            />
-          ))}
+            {traps.map(trap => (
+              <Marker
+                key={trap.id}
+                position={[trap.lat, trap.lng]}
+                icon={createTrapIcon(trap.status)}
+              />
+            ))}
+          </MarkerClusterGroup>
 
           {/* Route planner polyline and numbered markers */}
           {showRoute && routePositions.length > 0 && (
@@ -284,10 +289,10 @@ export default function MapPage() {
       )}
 
       {/* Map Tools - Top Center */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-gray-100">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1 bg-white/95 backdrop-blur-md p-2 rounded-full shadow-lg border border-gray-100">
         <button
           onClick={() => setShowHeatmap(!showHeatmap)}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+          className={`px-5 py-3 rounded-full text-sm font-semibold transition-all duration-200 min-h-[44px] ${
             showHeatmap 
               ? 'bg-orange-100 text-orange-800 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
@@ -296,10 +301,10 @@ export default function MapPage() {
         >
           🔥 Priority Heatmap
         </button>
-        <div className="w-px h-5 bg-gray-200 mx-1"></div>
+        <div className="w-px h-6 bg-gray-200 mx-1"></div>
         <button
           onClick={() => setShowRoute(!showRoute)}
-          className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+          className={`px-5 py-3 rounded-full text-sm font-semibold transition-all duration-200 min-h-[44px] ${
             showRoute 
               ? 'bg-blue-100 text-blue-800 shadow-sm' 
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'

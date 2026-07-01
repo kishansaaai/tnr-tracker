@@ -89,17 +89,14 @@ TNR Tracker implements a resilient AI pipeline that tries three providers in seq
 
 ### Configuration
 
-**Environment Variables** (client-side, prefixed with `VITE_`):
+**Environment Variables** (Securely stored in Supabase Secrets, not exposed to client):
 
-```env
-# Groq (Primary AI)
-VITE_GROQ_API_KEY=gsk_...
-VITE_GROQ_MODEL=llama-3.3-70b-versatile
-
-# Gemini (Fallback AI)
-VITE_GEMINI_API_KEY=your-key
-VITE_GEMINI_MODEL=gemini-1.5-flash-latest
+```bash
+# Set via Supabase CLI:
+supabase secrets set GEMINI_API_KEY=your-api-key
 ```
+
+**Client Wrapper Behavior**: The frontend routes all requests through the Supabase Edge Function (`gemini-proxy`). No credentials or raw endpoints are exposed to the client application.
 
 ### Colony Health Report API
 

@@ -172,35 +172,21 @@ Colony-level feeding coordination:
 
 ## 🤖 AI Integration
 
-TNR Tracker integrates AI in two mission-critical features:
+TNR Tracker integrates AI to solve two critical operational pain points for field volunteers:
 
-### 1. Colony Health Reports
-Generates structured veterinary-style assessments from real colony data. The AI receives:
-- Colony metadata (name, status, description)
-- Full cat roster (gender, neutered status, health notes)
-- Recent activity log (last 10 updates)
+1. **Kitty Cam Vision**: Ear-tip detection by eye is extremely challenging when handling blurry phone photos of feral cats in low-light field conditions. Multimodal AI scans uploaded images, detects ear-tipping (the universal marker for neutered cats), identifies coat patterns, and pre-fills form data.
+2. **Colony Health Reports**: Writing veterinary-style health assessments doesn't scale as soon as a volunteer manages multiple colonies. The AI aggregates unstructured timeline updates and cat rosters, transforming them into a structured report (Status Summary → Health Concerns → Neutering Progress → Actionable Next Steps).
 
-And produces a 4-section report: Status Summary → Health Concerns → Neutering Progress → Recommended Next Steps.
-
-### 2. Kitty Cam Vision
-Multimodal AI photo analysis that:
-- Detects **ear-tipping** (the universal TNR marker for neutered cats)
-- Identifies **breed/coat pattern**
-- Returns structured JSON for automated form pre-filling
-
-### Failover Architecture
-```
-Request → Groq API (LLaMA 3.3 70B Versatile)
-            ↓ (on failure)
-          Supabase Edge Function (gemini-proxy)
-            ↓ (on failure)
-          Direct Gemini 1.5 Flash API
-```
+### Secure, Server-Mediated Architecture
+To prevent API key exposure in client bundles, **all AI operations are mediated through authenticated Supabase Edge Functions** (`gemini-proxy`). 
+- **Zero Client-Key Exposure**: Frontend contains no API keys. Gemini credentials are encrypted and stored solely as server-side environment secrets.
+- **Rate-Limiting**: Every call is protected by a database-backed atomic rate limiter (`check_and_increment_rate_limit`) restricting users to 1 request per 5 seconds.
+- **Failover & Offline Resiliency**: If the Edge function fails (network loss, API provider downtime, or rate-limiting), the client gracefully falls back to high-fidelity pre-generated reports/scans based on seed data, ensuring zero workflow disruption during live demos or field use.
+- **Input Sanitization & Injection Constraints**: User inputs are sanitized to strip backticks and HTML elements. Indirect prompt injection via malicious volunteer logs is a acknowledged boundary constraint; safety rules are enforced via system instructions in the Edge function.
 
 ---
 
-## 🔒 Security
-
+- **Zero Client-Side AI Key Exposure** — All AI requests (Kitty Cam scans, Colony Health Reports) are mediated strictly through Supabase Edge Functions. No AI provider API keys (Gemini/Groq) are loaded on the client or exposed in the JS bundle.
 - **Row Level Security (RLS)** on all 7 database tables with granular policies
 - **SECURITY DEFINER** helper functions to prevent RLS recursion
 - **Content Security Policy** headers via Vercel configuration
@@ -208,7 +194,6 @@ Request → Groq API (LLaMA 3.3 70B Versatile)
 - **Input sanitization** — HTML injection prevented in updates via CHECK constraints
 - **AI prompt sanitization** — user inputs stripped of backticks and angle brackets before embedding
 - **Edge Function authentication** — Supabase JWT verification on all serverless functions
-- **Environment variable isolation** — API keys never exposed to the client bundle (VITE_ prefix only for public keys)
 
 ---
 
@@ -218,7 +203,7 @@ Request → Groq API (LLaMA 3.3 70B Versatile)
 - **Node.js** ≥ 18
 - **npm** ≥ 9
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [Groq](https://console.groq.com) API key (free tier available) and/or [Google AI Studio](https://aistudio.google.com) Gemini API key
+- A [Google AI Studio](https://aistudio.google.com) Gemini API key (stored securely in Supabase)
 
 ### 1. Clone & Install
 ```bash
@@ -231,21 +216,13 @@ npm install
 ```bash
 cp .env.example .env
 ```
-Edit `.env` with your credentials:
+Edit `.env` with your credentials (note that AI keys are not needed here since they are serverless-mediated):
 ```env
 # Supabase
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 
-# AI — Groq (primary)
-VITE_GROQ_API_KEY=your-groq-api-key
-VITE_GROQ_MODEL=llama-3.3-70b-versatile
-
-# AI — Gemini (fallback)
-VITE_GEMINI_API_KEY=your-gemini-api-key
-VITE_GEMINI_MODEL=gemini-1.5-flash-latest
-
-# TheCatAPI (Cat of the Day widget)
+# TheCatAPI (Cat of the Day widget proxy fallback)
 VITE_CAT_API_KEY=your-cat-api-key
 ```
 

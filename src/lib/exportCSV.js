@@ -75,7 +75,11 @@ export function exportColoniesCSV(colonies, cats) {
  */
 function escapeCSV(str) {
   if (str == null) return ''
-  const s = String(str)
+  let s = String(str)
+  // CSV Formula Injection mitigation: prefix leading = + - @ with a single quote
+  if (/^[=+\-@]/.test(s)) {
+    s = `'${s}`
+  }
   if (s.includes(',') || s.includes('"') || s.includes('\n')) {
     return `"${s.replace(/"/g, '""')}"`
   }
