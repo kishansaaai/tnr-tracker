@@ -10,6 +10,8 @@
 [![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?logo=vite)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.3-38B2AC?logo=tailwindcss)](https://tailwindcss.com)
 
+### 🔗 Live Demo: [https://tnr-tracker.vercel.app](https://tnr-tracker.vercel.app)
+
 **TNR Tracker** is a full-stack, map-first web application built for animal welfare volunteers managing **Trap-Neuter-Return** programs for community (stray/feral) cats. It replaces scattered spreadsheets and group chats with a unified, real-time platform for colony mapping, cat registration, AI-powered health analysis, adoption pipelines, and volunteer coordination.
 
 [Getting Started](#-getting-started) · [Features](#-features) · [Architecture](#-architecture) · [AI Integration](#-ai-integration) · [Documentation](#-documentation)
