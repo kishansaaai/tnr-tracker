@@ -436,17 +436,23 @@ export default function Walkthrough() {
 ├── src/
 │   ├── components/
 │   │   ├── Cats/               # forms, avatars, cards
+│   │   ├── Colony/             # feeding logs, health reports
 │   │   ├── Recovery/           # meds, release overlay
 │   │   └── UI/                 # drawers, loaders
 │   ├── hooks/
 │   │   ├── useAuth.jsx         # session listener
 │   │   ├── useColonies.js      # colonies CRUD
 │   │   └── useTraps.js         # field traps state
+│   ├── lib/
+│   │   ├── gemini.js           # AI wrapper & demo fallbacks
+│   │   ├── exportCSV.js        # secure CSV data export
+│   │   └── utils.js            # geodetic routing (TSP)
 │   ├── pages/
-│   │   ├── MapPage.jsx         # heatmap + TSP
+│   │   ├── MapPage.jsx         # clustered map + route planner
 │   │   ├── AdoptionPage.jsx    # kanban board
-│   │   └── Dashboard.jsx       # recharts telemetry
+│   │   └── Dashboard.jsx       # telemetry charts
 │   └── index.css               # tokens + keyframes
+├── vite.config.js              # PWA plugin configuration
 └── vercel.json                 # routes + CSP`}
           </pre>
         </div>
