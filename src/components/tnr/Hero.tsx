@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 import { CatAvatar, PawIcon, Reveal } from "./Decorative";
 import { Cat3D, CatParade } from "./Cat3D";
 
-import catHero from "@/assets/cat-hero.png";
-import catWalk from "@/assets/cat-walk.png";
+import catHero from "../../assets/cat-hero.png";
+import catWalk from "../../assets/cat-walk.png";
 
 function HeroDiorama() {
   const pins = [

@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { CatAvatar, PawIcon } from "./Decorative";
-import catGroup from "@/assets/cat-group.png";
-import catRunning from "@/assets/cat-running.png";
-import catEartip from "@/assets/cat-eartip.png";
+import catGroup from "../../assets/cat-group.png";
+import catRunning from "../../assets/cat-running.png";
+import catEartip from "../../assets/cat-eartip.png";
 
 // ----- 1. Map with priority heatmap -----
 export function MapVisual() {

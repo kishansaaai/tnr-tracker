@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { PawIcon, Reveal } from "./Decorative";
-import catSleeping from "@/assets/cat-sleeping.png";
+import catSleeping from "../../assets/cat-sleeping.png";
 
 export function Navbar() {
   const handleScroll = (e, id) => {
