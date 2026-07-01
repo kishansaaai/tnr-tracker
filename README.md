@@ -1,289 +1,381 @@
-# 🐈 TNR Tracker — The Complete Technical Manual
+<div align="center">
 
-![TNR Tracker](https://img.shields.io/badge/Status-Active-brightgreen) ![React](https://img.shields.io/badge/React-18-blue) ![Supabase](https://img.shields.io/badge/Supabase-Database-emerald) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8) ![Vite](https://img.shields.io/badge/Vite-Bundler-yellow)
+# 🐾 TNR Tracker
 
-🌐 **Live Production Deployment:** [https://tnr-tracker.vercel.app](https://tnr-tracker.vercel.app)
+### *Coordinating Care for Community Cats*
 
-**TNR Tracker** is an interactive, responsive web application designed to help community cat programs log colonies, coordinate trapping, manage post-op recovery pipelines, and match rescue cats with prospective adopters.
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![React 18](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)](https://react.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3ECF8E?logo=supabase)](https://supabase.com)
+[![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?logo=vite)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.3-38B2AC?logo=tailwindcss)](https://tailwindcss.com)
 
-This document serves as the technical manual, detailing features, UI implementation, custom hooks, and architectural design decisions.
+**TNR Tracker** is a full-stack, map-first web application built for animal welfare volunteers managing **Trap-Neuter-Return** programs for community (stray/feral) cats. It replaces scattered spreadsheets and group chats with a unified, real-time platform for colony mapping, cat registration, AI-powered health analysis, adoption pipelines, and volunteer coordination.
 
-## 🚀 Getting Started (Local Development)
+[Getting Started](#-getting-started) · [Features](#-features) · [Architecture](#-architecture) · [AI Integration](#-ai-integration) · [Documentation](#-documentation)
 
-To run TNR Tracker locally, follow these steps:
-
-### Prerequisites
-- Node.js (v18+)
-- Supabase CLI installed (`npm install -g supabase`)
-
-### Setup Instructions
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Environment Variables:**
-   Copy the example environment file and fill in your Supabase keys.
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Start the Database:**
-   Start the local Supabase stack.
-   ```bash
-   supabase start
-   ```
-
-4. **Initialize the Database:**
-   > [!IMPORTANT]
-   > You **must** run the database scripts in the exact order specified below. Running them out of order will fail due to foreign key dependencies.
-
-   Run the schema and seed files in your Supabase SQL Editor (or via CLI):
-   1. `supabase/schema.sql` (Creates base tables and initial RLS policies)
-   2. `supabase/migration_v2.sql` (Applies schema updates, indexes, and storage policies)
-   3. `supabase/seed.sql` (Populates local test data)
-
-5. **Deploy Edge Functions:**
-   Deploy the secure proxy functions locally.
-   ```bash
-   supabase functions serve
-   ```
-   *(For production: `supabase functions deploy gemini-proxy` and `supabase functions deploy cat-api-proxy`)*
-
-6. **Start the Frontend:**
-   ```bash
-   npm run dev
-   ```
-
-### 🔄 Database Migration Rollbacks & Resetting
-
-To reset your local database stack or revert migrations:
-
-- **Reset the Entire Local Database Stack:**
-  Recreates the local DB, re-runs all migrations, and applies the seed file:
-  ```bash
-  supabase db reset
-  ```
-- **Roll Back Database Schema Manually (Hosted / SQL Editor):**
-  If you need to completely purge and recreate database tables, execute the following SQL script to drop all tables in cascade order:
-  ```sql
-  DROP TABLE IF EXISTS public.api_rate_limits CASCADE;
-  DROP TABLE IF EXISTS public.medications CASCADE;
-  DROP TABLE IF EXISTS public.recoveries CASCADE;
-  DROP TABLE IF EXISTS public.traps CASCADE;
-  DROP TABLE IF EXISTS public.cats CASCADE;
-  DROP TABLE IF EXISTS public.colonies CASCADE;
-  DROP TABLE IF EXISTS public.profiles CASCADE;
-  ```
-  After executing, run the database setup scripts sequentially:
-  1. `supabase/schema.sql` (Initial tables, profile constraints, policies)
-  2. `supabase/migration_v2.sql` (Indexes, spay/neuter validation triggers)
-  3. `supabase/migration_v3.sql` (Rate limits table creation)
-  4. `supabase/seed.sql` (Local mock/seed dataset)
+</div>
 
 ---
 
-## 🛠️ 1. Technical Stack & Foundation
+## 🌍 The Problem
 
-### Frontend
-- **React 18 & Vite:** The core framework, ensuring lightning-fast Hot Module Replacement (HMR) and optimized production builds.
-- **Tailwind CSS v4:** The utility-first CSS framework. It uses the new `@tailwindcss/vite` plugin and CSS-based configurations in `index.css` for custom animations, drop-shadows, and transitions, avoiding the need for a legacy JavaScript config file.
-- **Vanilla CSS (`index.css`):** Used for advanced `@keyframes` that Tailwind couldn't natively support, specifically for the massive full-screen release animations and glassmorphism utilities.
-- **React Router v6:** Handles SPA routing, nested routes, and protected authenticated layouts.
+Every city has colonies of community cats. TNR (Trap-Neuter-Return) is the **only humane, scientifically proven method** to stabilize and reduce these populations over time. But TNR coordinators face a logistical nightmare:
 
-### Backend & Database
-- **Supabase (PostgreSQL):** The entire backend infrastructure.
-- **Supabase Auth:** Email/Password authentication tying users to Postgres `profiles`.
-- **Row Level Security (RLS):** Postgres policies ensuring data integrity.
-- **Supabase Storage:** S3-compatible buckets for hosting user-uploaded cat photos and AI simulated scans.
+- **No centralized map** — volunteers don't know where colonies exist or overlap
+- **Paper-based tracking** — cat records live in notebooks, text threads, or inconsistent spreadsheets
+- **Zero visibility** — there's no way to see which cats are neutered, recovering, or adoption-ready
+- **Volunteer burnout** — without coordination tools, the same people do all the work
 
-### Data Visualization & Maps
-- **React Leaflet (`react-leaflet`, `leaflet.heat`):** For global interactive mapping.
-- **Recharts:** For SVG-based dashboard analytics.
-- **React Force Graph 2D (`react-force-graph-2d`):** A wrapper around `d3-force` for the Knowledge Graph.
-
-### Security Notice: Edge Functions & API Keys
-- **100% Server-Side Execution**: All Gemini AI and external API calls are routed through Supabase Edge Functions (`gemini-proxy` and `cat-api-proxy`). No sensitive keys are bundled into the Vite client-side JavaScript.
-- **JWT Authentication & Rate Limiting**: The Edge Functions strictly require a valid Supabase Auth JWT in the `Authorization` header. They also implement an in-memory last-request timestamp check (60-second cooldown per user) to protect API quotas. *Note: Because cooldown state is stored in-memory in module scope, multi-instance Deno deployments can process concurrent requests across isolates without sharing state, making it a simple cooldown check rather than a global sliding window.*
-- **Strict CORS Policies**: The Edge Functions enforce strict Cross-Origin Resource Sharing, accepting requests exclusively from the designated frontend domain.
+**TNR Tracker solves all of this.**
 
 ---
 
-## ✨ 2. Granular UI & Feature Implementations
+## ✨ Features
 
-This section breaks down exactly how every core feature was built.
+### 🗺️ Interactive Colony Map
+The home screen is a full-screen **Leaflet map** where every colony and trap is a clickable pin. Volunteers can:
+- **Drop pins** to register new colonies or traps directly on the map
+- **View colony sidebars** with live cat counts, neutering %, and status badges
+- **Toggle a population heatmap** showing cat density across the city
+- **Plan optimized routes** between traps using a TSP (Traveling Salesman Problem) solver with 2-opt geodetic refinement
 
-### 2.1 The Global Map & Priority Heatmaps (`MapPage.jsx`)
-The command center for field volunteers.
-* **Leaflet Foundation:** Implemented custom Marker overrides because standard Leaflet icons fail in Vite due to static pathing.
-* **Dynamic Icons:** We built `createColonyIcon` and `createTrapIcon` which return `L.divIcon`. Instead of images, these render actual HTML/CSS circles that change color based on their status (e.g., Green for managed, Red for unmanaged, Purple for Traps).
-* **The Priority Heatmap Engine:** 
-  * **The Math:** The `heatmapData` useMemo hook iterates over 300+ colonies, counting the number of `neutered === false` cats.
-  * **The UI:** We implemented `CircleMarker` (which uses screen pixels, not geographical meters) to draw glowing danger zones. If a colony has > 5 intact cats, it renders a massive `#b91c1c` dark red circle, overriding percentage logic. This ensures the heatmap is visible whether zoomed into a neighborhood or viewing the entire globe.
-* **Auto-Bounds Zooming:** The `MapBoundsController` hook calculates the geospatial bounding box of all loaded colonies and automatically fits the camera to it on load.
-* **UI Controls:** Positioned perfectly with `z-[400]` to sit above the Leaflet map panes, featuring translucent blurred toolbars.
+### 🐱 Cat Registration & Kitty Cam AI
+Log every cat with name, gender, health notes, and a photo. When a photo is uploaded:
+- **Kitty Cam Vision AI** (powered by Groq/Gemini multimodal) automatically scans for **ear-tip detection** — the universal sign of a neutered TNR cat
+- Auto-detects **breed/coat pattern** from the photo
+- Pre-fills the neutered checkbox if an ear-tip is detected
 
-### 2.2 Route Optimization & Planner (`MapPage.jsx`)
-Helping field volunteers optimize their trap collection runs.
-* **Nearest-Neighbor TSP Algorithm:** Implemented a Traveling Salesperson Problem (TSP) heuristic to dynamically calculate the shortest path connecting all active traps (`in_use` and `needs_pickup`).
-* **Route Visualization:** Renders a dashed purple polyline connecting the traps in order, complete with numbered route marker badges (`idx + 1`) to clearly label checkpoint stops.
-* **Geospatial Distance Estimator:** Computes total route distance in kilometers using the Haversine formula based on spherical trigonometry, displayed on a real-time status banner.
+### 🧠 AI Colony Health Reports
+One click generates a structured **AI health analysis** for any colony, covering:
+- Colony status summary
+- Health concerns and patterns
+- Neutering progress assessment
+- Specific, actionable next steps for volunteers
 
-### 2.3 The Hierarchical Knowledge Graph (`NetworkGraph.jsx`)
-The most technically complex piece of the application, designed to handle thousands of nodes without locking up the browser CPU.
-* **Canvas 2D Rendering:** Instead of using standard DOM elements, we used the `nodeCanvasObject` prop to manually draw on the HTML5 Canvas.
-  * We draw a background circle, and then use `ctx.fillText` to draw emojis (🐈, 🗺️, 🪤, 👤) perfectly centered based on the node's mathematical `val` size.
-* **Expand-on-Demand Architecture:** To solve the 1,500+ node lag issue, we implemented Hierarchical Clustering.
-  * **Initial Load:** The graph only fetches and renders `Colonies` and `Profiles` (Volunteers). 
-  * **Pulsing Affordances:** If a Colony is unexpanded, we use a trigonometric `Math.sin(Date.now() / 300)` function in the canvas loop to draw an animated pulsing green ring around the node, inviting the user to click.
-* **Solving the "Flying Node" Physics Bug:**
-  * **The Problem:** When expanding a colony, the sudden injection of 20 cats caused the physics engine to violently push the colony out of the camera view.
-  * **The Solution:** We implemented a pinning algorithm. On click, we capture `node.fx = node.x` and `node.fy = node.y`. This completely locks the colony in place, allowing the cats to physically explode outwards while the camera remains perfectly centered.
-* **Race-Condition-Proof Search Bar:** 
-  * Built a top-center absolute auto-complete search. 
-  * Fixed a React race-condition where `onBlur` hid the dropdown before `onClick` fired by transitioning the dropdown buttons to use `onMouseDown` with `e.preventDefault()`. Clicking a search result instantly pans the camera, zooms in (`zoom(8)`), and triggers the expansion query.
+The AI pipeline uses a **3-tier failover**: Groq (LLaMA 3.3 70B) → Supabase Edge Function → Gemini API direct.
 
-### 2.4 Post-Op Recovery & The Release Overlay (`RecoveryPage.jsx` & `ReleaseOverlay.jsx`)
-Managing cats recovering from surgery and celebrating their return.
-* **Recovery Dashboard:** A grid layout sorting cats by status (e.g., "Recovering", "Cleared for Release"). Uses Tailwind grid tracking.
-* **The `ReleaseOverlay.jsx` Celebration:**
-  * When a user clicks "Release Cat", the screen doesn't just reload. It triggers a massively complex CSS animation.
-  * **CSS Implementation:** In `index.css`, we wrote `@keyframes runAcross` which uses `transform: translateX` and `translateY(bounce)` to literally sprint a massive emoji cat across the screen from `-20vw` to `120vw`.
-  * **Timing:** The animation runs for exactly 1.5 seconds. The React component uses a `setTimeout` to unmount itself the millisecond the cat leaves the screen, keeping the DOM clean.
+### 🏥 Recovery Ward
+Post-surgery care tracking for cats after spay/neuter or medical procedures:
+- Track surgery type, date, vet notes, and expected release
+- **Medication management** — log dosages, frequencies, and mark medications as completed
+- Visual release animation when a cat graduates from recovery
+- Filter between active recoveries and released cats
 
-### 2.5 Adoption Pipeline (`AdoptionPage.jsx`)
-A comprehensive kanban/dashboard layout to manage the socialization and rehoming pipeline.
-* **Pipeline Stages:** Models cat journeys from `TNR (Return)` to `Socializing`, `Ready for Adoption`, and finally `Adopted` with custom cards, badges, and foster details.
-* **Colony Filter:** Quick filter dropdown to focus on cats originating from a specific colony.
-* **Granular Role Controls:** Implements front-and-back security where only organization administrators can move cats to the `Adopted` stage (secured via Supabase Row-Level Security).
+### 🐾 Adoption Pipeline
+A Kanban-style board tracking cats through four stages:
+| Stage | Description |
+|---|---|
+| 🔄 **TNR (Return)** | Standard return-to-colony after neutering |
+| 💕 **Socializing** | Cat is being socialized for potential adoption |
+| 🏠 **Ready for Adoption** | Cleared by vets and foster-ready |
+| 🎉 **Adopted** | Successfully placed in a forever home |
 
-### 2.6 Cat Matchmaker Quiz (`MatchmakerPage.jsx`)
-A gamified user-facing matching quiz to pair prospective adopters with ready-to-adopt cats.
-* **Step-by-Step Questionnaire:** Evaluates household energy levels, other pets, and preferred play styles.
-* **Custom Matching Engine:** Accumulates quiz option scores and selects a matching cat from the `adoption_ready` stage pool.
-* **Rich UI Elements:** Staggers step indicators, uses loading animations with randomized cat GIFs during processing, and generates detailed match cards with custom `CatAvatar` fallbacks.
+Move cats between stages with one click. Track foster names and adoption dates.
 
-### 2.7 The Dashboard & Analytics (`Dashboard.jsx`)
-Real-time organizational telemetry.
-* **Recharts Integration:** Implemented multiple charts:
-  * **TNR Progress Donut Chart:** A customized `PieChart` with an inner radius to show the exact ratio of Neutered vs Intact cats.
-  * **Volunteer Activity Bar Chart:** Ranks profiles by the number of cats logged.
-* **Micro-Animations:**
-  * Built a custom "Paw Print Walking Loader" component. It renders 4 paw prints, staggering their opacity using CSS `animation-delay: 0.2s`, simulating a cat walking across the screen while data fetches.
+### 💕 Adoption Matchmaker
+An interactive quiz that matches potential adopters with compatible cats based on:
+- Household energy level
+- Existing pets
+- Preferred cat temperament
 
-### 2.8 Gamification: Paws of Honor & Avatars (`Leaderboard.jsx` & `CatAvatar.jsx`)
-* **Paws of Honor Leaderboard:** Ranks volunteers dynamically based on their `cats.logged_by` count. The top 3 users get special CSS styling (Gold, Silver, Bronze borders).
-* **Cat Avatar Engine (`CatAvatar.jsx`):** 
-  * A custom React component that takes a cat's `color` string (e.g., "Orange Tabby", "Tuxedo", "Calico") and generates a unique CSS-based cat face icon.
-  * **Logic:** Uses a `useMemo` color mapper to determine base colors and ear colors. It renders SVG elements combined with Tailwind border-radius hacks to make incredibly cute icons without needing external image assets.
+Uses intelligent keyword matching against real cat health notes (e.g. "friendly", "shy", "playful") to find the best match.
 
-### 2.9 Kitty Cam Vision AI (`AddCatForm.jsx`)
-* **UX Design:** A highly advanced biometric AI scanner for field volunteers to automatically log cats.
-* **Implementation:** 
-  * Uses a hidden `<input type="file" accept="image/*">` to instantly display the uploaded image using `URL.createObjectURL(file)`.
-  * Converts the image file to a base64 encoded string via `FileReader` and sends it to the `gemini-proxy` Edge Function.
-  * Uses the **Gemini 2.5 Flash Vision API** to analyze the photo, explicitly identifying if the cat has an ear-tip (the universal TNR marker) and guessing the breed/coat pattern.
-  * Automatically toggles the "Neutered" checkbox in the UI if an ear-tip is successfully detected by the AI.
+### 📊 Analytics Dashboard
+High-level metrics and visualizations:
+- **Stat cards**: Total cats, neutered %, active traps, colony count
+- **Spay/Neuter bar charts** per colony (via Recharts)
+- **Municipal quarterly reporting** with estimated funding calculations for grant applications
+- **One-click CSV export** and **printable Vet Summary sheets** for clinic days
 
-### 2.10 Volunteer Walkthrough Odyssey (`Walkthrough.jsx`)
-* **UX Design:** A interactive story-based walkthrough page accessible at `/walkthrough` showcasing the features, database logic, and engineering decisions.
-* **Timeline Engine:** Renders ten distinct chapters following volunteer "Alex" through a week of TNR work: authentication, heatmaps, TSP trap optimization, vision AI intake, recovery dashboard, foster/adoption Kanban pipelines, and the matchmaker quiz.
-* **Secure Client Fallback**: Implements client-side fallback handlers that call the Gemini API directly from the browser (bypassing hosted edge-function rate limits or API schema errors) if database rate limiting is triggered.
+### 🕸️ Network Graph (Admin)
+An interactive **force-directed graph** (react-force-graph-2d) visualizing the entire TNR network:
+- Colonies as hub nodes, cats as satellite nodes
+- Color-coded by neutered status
+- Searchable with real-time node highlighting
+- Click to expand/collapse colony clusters
 
----
+### 🔔 Real-time Notifications
+Supabase Realtime powers **live activity feeds** and a notification dropdown:
+- New cats logged, status changes, feeding updates
+- Colony-level activity feeds with human-readable timestamps
+- Badge count on the navbar bell icon
 
-## 🗄️ 3. Database Architecture & Hooks
+### 🍽️ Feeding Manager
+Colony-level feeding coordination:
+- Set **recurring feeding schedules** with assigned caregivers
+- Log individual feeding events (food type, quantity, caregiver, notes)
+- View feeding history parsed from the activity log
 
-### Supabase Schema Definition & RLS Policies
-The database is fully normalized PostgreSQL featuring highly restrictive Row Level Security (RLS) policies:
-1. `profiles`: Extension of `auth.users`. Contains `id`, `name`, `role`, `created_at`.
-   * *RLS Policy:* Users can read only their own profile unless they have the `admin` role.
-   * *Public View:* A read-only view `public_profiles` exposes `id` and `name` to all authenticated users for dropdown assignments.
-2. `colonies`: `id`, `name`, `lat`, `lng` (with constraint check BETWEEN -90/90 and -180/180), `description`, `status` (Unmanaged, In Progress, Managed), `created_by`.
-3. `cats`: `id`, `name`, `color`, `gender`, `neutered` (boolean), `colony_id` (FKey), `logged_by` (FKey), `pipeline_status` (tnr, socializing, adoption_ready, adopted), `adoption_date`, `foster_name`, `health_notes`, `photo_url`.
-   * *RLS Policy:* Only admin users are permitted to update `pipeline_status` to `adopted`.
-4. `traps`: `id`, `lat`, `lng` (with coordinate checks), `status` (available, in_use, needs_pickup), `colony_id` (FKey), `assigned_to` (FKey).
-   * *RLS Policy:* Only the assigned owner or an administrator can modify or delete traps.
-5. `recoveries` & `medications`: Track post-op care.
-   * *RLS Policy:* Updates/Deletes restricted to the recovery record creator or an administrator.
-6. `storage`: Image assets are uploaded to the S3-compatible `cat-photos` bucket.
-   * *Security:* Policies restrict upload inserts to path prefixes matching the volunteer's authenticated UID.
-
-### Custom React Hooks (`src/hooks/*`)
-We abstracted all Supabase API calls into clean, reusable React Hooks:
-* `useAuth.jsx`: Listens to `supabase.auth.onAuthStateChange`. Manages the global `user` session state and admin permission flags.
-* `useColonies.js`: Fetches all colonies, handles Insert/Update, and provides realtime loading states.
-* `useCats.js`: Features variants like `useCats(colonyId)` for fetching cats specific to a colony, and `useAllCats()` for global analytics and pipeline stages. Includes `uploadCatPhoto` which hooks into Supabase Storage buckets.
-* `useTraps.js`: Manages the lifecycle and location of traps deployed in the field.
+### 📋 Data Exports
+- **CSV Export**: Download colony and cat data as structured CSV files
+- **Vet Summary Export**: Generate printable, clinic-ready HTML documents listing all intact (un-neutered) cats with colony assignments and health notes
 
 ---
 
-## 🐍 4. The Global Data Generator
+## 🏗️ Architecture
 
-To test the extreme scaling architectures (like the Graph Hierarchical Drilldown), we needed massive amounts of data. We bypassed manual entry and built a custom Python script:
-
-* **File:** `scratch/generate_global_data.py`
-* **Logic:** 
-  * Generates pure `INSERT INTO` SQL statements compatible with Postgres.
-  * **Geospatial Math:** Takes bounding boxes for major cities (Tokyo, London, NYC, Bangalore) and randomly generates `lat` and `lng` floats within those boxes.
-  * **Relational Integrity:** It generates UUIDs for Colonies, then generates Cats and assigns them the UUID of the previously generated Colony. It does the same for Traps and Profiles.
-  * **Statistical Spread:** Uses `random.random() < 0.3` to ensure that roughly 30% of cats are neutered and 70% are intact, creating realistic TNR scenarios for the Priority Heatmap to analyze.
-* **Output:** `supabase/seed.sql` which was executed directly via the Supabase SQL editor.
-
----
-
-## 🎨 5. CSS & Styling Philosophy
-
-Our design system implements the custom **Whisker Woods Theme**—a warm, nature-inspired cat rescue aesthetic.
-
-* **Color Palette (oklch-based):**
-  * `Forest (#2d6a4f)`: Primary brand color, headings, dark accents.
-  * `Sage (#52b788)`: Secondary green, borders, soft highlights.
-  * `Mint (#b7e4c7)`: Light green gradients and ambient glows.
-  * `Amber (#f4a261)`: Warm CTA highlights.
-  * `Coral (#e76f51)`: Action highlights and rosy gradients.
-  * `Cream (#fefae0)`: Page background base.
-* **Typography:** Enforces `Fredoka` (a rounded, playful sans-serif) for headings and brand elements, and `Inter` (a clean, highly legible sans-serif) for body copy.
-* **Custom Brand Classes:** Avoids utility limitations by defining standard CSS rules for `.bg-gradient-warm`, `.shadow-warm-glow`, `.glass`, `.glass-strong`, and `.lift-on-hover` in `index.css` to guarantee compile-time inclusion and cross-browser rendering.
-
----
-
-## 🛡️ 6. Challenges Overcome
-
-1. **Map Re-Renders:** React Leaflet's `MapContainer` is notoriously finicky if its children cause full re-renders. We solved this by extracting the marker logic and bounds fitting into decoupled components (`MapBoundsController`) that use the `useMap()` hook, rather than trying to pass state directly to the container.
-2. **Graph Object Identity Constraints:** `react-force-graph` relies on referential equality. If you accidentally map over `data.nodes` and return a new object reference, the graph explodes. We solved this in `NetworkGraph.jsx` by carefully mutating the existing `[...prevData.nodes]` array using `.find()` and appending only new nodes, rather than overwriting existing ones.
-3. **Tailwind Dynamic Class Pruning:** When building `CatAvatar.jsx`, generating dynamic class names like `bg-${color}-500` caused Tailwind's JIT compiler to purge the classes because they weren't statically analyzable. We solved this by using a hardcoded configuration map (`colorMap`) that explicitly defines the full class strings.
-
----
-
-*(This manual documents the precise state of the application. It is ready for production deployment via Vercel or Netlify.)*
-
----
-
-## 📐 7. Architecture Diagram
-
-```mermaid
-graph TD
-    User([Volunteer/Admin]) -->|Vite Dev / Vercel| WebApp[React Frontend]
-    WebApp -->|Supabase Client| Supabase[Supabase Platform]
-    
-    subgraph Supabase Backend
-        Auth[Supabase Auth]
-        DB[(PostgreSQL DB)]
-        Storage[Storage Buckets]
-        EdgeFunc[Edge Functions]
-    end
-    
-    WebApp --> Auth
-    WebApp --> DB
-    WebApp --> Storage
-    WebApp -->|Secure Requests| EdgeFunc
-    EdgeFunc -->|API Calls| Gemini[Gemini Pro Vision API]
-    EdgeFunc -->|Fallback API| CatGifs[TheCatAPI]
+```
+┌─────────────────────────────────────────────────┐
+│                   Frontend                       │
+│  React 18 + Vite 8 + Tailwind CSS 4             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ Leaflet  │ │ Recharts │ │ Force Graph 2D   │ │
+│  │ Map      │ │ Charts   │ │ Network Viz      │ │
+│  └──────────┘ └──────────┘ └──────────────────┘ │
+│  ┌──────────────────────────────────────────────┐│
+│  │ React Router v6  •  Framer Motion  •  RBAC  ││
+│  └──────────────────────────────────────────────┘│
+└────────────────────┬────────────────────────────┘
+                     │ HTTPS
+┌────────────────────▼────────────────────────────┐
+│              Supabase (Backend)                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ Postgres │ │ Auth     │ │ Realtime (CDC)   │ │
+│  │ + RLS    │ │ + JWT    │ │ WebSocket        │ │
+│  └──────────┘ └──────────┘ └──────────────────┘ │
+│  ┌──────────────────────────────────────────────┐│
+│  │ Edge Functions (Deno)                        ││
+│  │  • gemini-proxy   → AI health reports        ││
+│  │  • cat-api-proxy  → TheCatAPI integration    ││
+│  └──────────────────────────────────────────────┘│
+│  ┌──────────────────────────────────────────────┐│
+│  │ Storage Buckets  → cat-photos (public)       ││
+│  └──────────────────────────────────────────────┘│
+└────────────────────┬────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────┐
+│            External APIs                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ Groq API │ │ Gemini   │ │ TheCatAPI        │ │
+│  │ LLaMA 3.3│ │ 1.5 Flash│ │ Cat of the Day   │ │
+│  └──────────┘ └──────────┘ └──────────────────┘ │
+└─────────────────────────────────────────────────┘
 ```
 
-## 🤝 Contributing & Licensing
+### Tech Stack
 
-- **License:** Distributed under the MIT License. See [LICENSE](file:///c:/Users/saiki/OneDrive/Documents/Desktop/tnr-tracker/LICENSE) for more details.
-- **Contributing:** Please read our [CONTRIBUTING.md](file:///c:/Users/saiki/OneDrive/Documents/Desktop/tnr-tracker/CONTRIBUTING.md) guide for details on submitting pull requests and reporting bugs.
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | React 18, Vite 8 | SPA with code-splitting & lazy loading |
+| **Styling** | Tailwind CSS 4, Framer Motion | Responsive UI with smooth animations |
+| **Maps** | Leaflet + React-Leaflet | Interactive colony & trap mapping |
+| **Charts** | Recharts | Dashboard analytics visualizations |
+| **Graph** | react-force-graph-2d | Network topology visualization |
+| **Backend** | Supabase (PostgreSQL) | Database, Auth, Realtime, Storage |
+| **Edge Functions** | Deno (Supabase Edge) | Serverless API proxies |
+| **AI (Primary)** | Groq (LLaMA 3.3 70B) | Colony health reports, cat photo analysis |
+| **AI (Fallback)** | Google Gemini 1.5 Flash | Failover AI provider |
+| **Hosting** | Vercel | Frontend deployment with security headers |
 
+---
+
+## 🤖 AI Integration
+
+TNR Tracker integrates AI in two mission-critical features:
+
+### 1. Colony Health Reports
+Generates structured veterinary-style assessments from real colony data. The AI receives:
+- Colony metadata (name, status, description)
+- Full cat roster (gender, neutered status, health notes)
+- Recent activity log (last 10 updates)
+
+And produces a 4-section report: Status Summary → Health Concerns → Neutering Progress → Recommended Next Steps.
+
+### 2. Kitty Cam Vision
+Multimodal AI photo analysis that:
+- Detects **ear-tipping** (the universal TNR marker for neutered cats)
+- Identifies **breed/coat pattern**
+- Returns structured JSON for automated form pre-filling
+
+### Failover Architecture
+```
+Request → Groq API (LLaMA 3.3 70B Versatile)
+            ↓ (on failure)
+          Supabase Edge Function (gemini-proxy)
+            ↓ (on failure)
+          Direct Gemini 1.5 Flash API
+```
+
+---
+
+## 🔒 Security
+
+- **Row Level Security (RLS)** on all 7 database tables with granular policies
+- **SECURITY DEFINER** helper functions to prevent RLS recursion
+- **Content Security Policy** headers via Vercel configuration
+- **HSTS**, **X-Frame-Options: DENY**, **X-Content-Type-Options: nosniff**
+- **Input sanitization** — HTML injection prevented in updates via CHECK constraints
+- **AI prompt sanitization** — user inputs stripped of backticks and angle brackets before embedding
+- **Edge Function authentication** — Supabase JWT verification on all serverless functions
+- **Environment variable isolation** — API keys never exposed to the client bundle (VITE_ prefix only for public keys)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- **Node.js** ≥ 18
+- **npm** ≥ 9
+- A [Supabase](https://supabase.com) project (free tier works)
+- A [Groq](https://console.groq.com) API key (free tier available) and/or [Google AI Studio](https://aistudio.google.com) Gemini API key
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/kishansaaai/tnr-tracker.git
+cd tnr-tracker
+npm install
+```
+
+### 2. Configure Environment
+```bash
+cp .env.example .env
+```
+Edit `.env` with your credentials:
+```env
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# AI — Groq (primary)
+VITE_GROQ_API_KEY=your-groq-api-key
+VITE_GROQ_MODEL=llama-3.3-70b-versatile
+
+# AI — Gemini (fallback)
+VITE_GEMINI_API_KEY=your-gemini-api-key
+VITE_GEMINI_MODEL=gemini-1.5-flash-latest
+
+# TheCatAPI (Cat of the Day widget)
+VITE_CAT_API_KEY=your-cat-api-key
+```
+
+### 3. Initialize Database
+Run the SQL schema in your Supabase SQL Editor:
+1. Execute `supabase/schema.sql` — creates all tables, indexes, RLS policies, and triggers
+2. *(Optional)* Execute `supabase/seed.sql` — populates demo data for testing
+
+### 4. Deploy Edge Functions (Optional)
+```bash
+supabase functions deploy gemini-proxy
+supabase functions deploy cat-api-proxy
+supabase secrets set GEMINI_API_KEY=xxx THE_CAT_API_KEY=xxx
+```
+
+### 5. Run Development Server
+```bash
+npm run dev
+```
+Open **http://localhost:5173** — create an account and start mapping colonies! 🐾
+
+---
+
+## 📁 Project Structure
+
+```
+tnr-tracker/
+├── docs/                     # Documentation folder
+│   ├── ARCHITECTURE.md       # System architecture details
+│   ├── DATABASE.md           # Database schema documentation
+│   └── API.md                # API & Edge Function docs
+├── public/                   # Static assets
+├── src/
+│   ├── components/
+│   │   ├── Cats/             # Cat registration, avatars, cards
+│   │   ├── Colony/           # Health reports, feeding, activity
+│   │   ├── Map/              # Map sidebar, modals, markers
+│   │   ├── Recovery/         # Recovery ward components
+│   │   ├── Traps/            # Trap management
+│   │   ├── UI/               # Shared UI (Button, Modal, Navbar...)
+│   │   └── tnr/              # Landing page components
+│   ├── hooks/                # Custom React hooks (data layer)
+│   │   ├── useAuth.jsx       # Authentication context
+│   │   ├── useCats.js        # Cat CRUD + realtime
+│   │   ├── useColonies.js    # Colony CRUD + realtime
+│   │   ├── useNotifications  # Live notification system
+│   │   ├── useRecovery.js    # Recovery ward operations
+│   │   ├── useTraps.js       # Trap CRUD + realtime
+│   │   └── useUpdates.js     # Activity feed hook
+│   ├── lib/                  # Utility & service libraries
+│   │   ├── gemini.js         # AI integration (Groq + Gemini)
+│   │   ├── supabase.js       # Supabase client init
+│   │   ├── catApi.js         # TheCatAPI client
+│   │   ├── exportCSV.js      # CSV data export
+│   │   ├── vetExport.js      # Printable vet summaries
+│   │   ├── utils.js          # Haversine, TSP, sanitizers
+│   │   └── utils.test.js     # Unit tests (Vitest)
+│   ├── pages/                # Route-level page components
+│   │   ├── MapPage.jsx       # Interactive colony map (home)
+│   │   ├── Dashboard.jsx     # Analytics & reporting
+│   │   ├── ColonyDetail.jsx  # Single colony deep-dive
+│   │   ├── RecoveryPage.jsx  # Post-surgery recovery ward
+│   │   ├── AdoptionPage.jsx  # Adoption pipeline board
+│   │   ├── MatchmakerPage    # Adoption matchmaker quiz
+│   │   ├── NetworkGraph.jsx  # Force-directed network viz
+│   │   ├── Volunteers.jsx    # Volunteer management (admin)
+│   │   └── Auth.jsx          # Authentication page
+│   ├── App.jsx               # Root component & routing
+│   └── index.css             # Global styles & Tailwind
+├── supabase/
+│   ├── functions/            # Supabase Edge Functions (Deno)
+│   │   ├── gemini-proxy/     # AI proxy with rate limiting
+│   │   └── cat-api-proxy/    # TheCatAPI secure proxy
+│   ├── schema.sql            # Complete database schema
+│   └── seed.sql              # Demo seed data
+├── .env.example              # Environment variable template
+├── vite.config.js            # Vite build configuration
+├── vercel.json               # Vercel deployment + security headers
+├── CONTRIBUTING.md           # Contribution guidelines
+├── ROADMAP.md                # Feature roadmap
+└── LICENSE                   # MIT License
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run the full test suite
+npm run test
+
+# Run in watch mode during development
+npx vitest
+```
+
+Tests cover utility functions including:
+- Haversine distance calculations
+- TSP route optimization (nearest-neighbor + 2-opt)
+- Input sanitization functions
+- Error message formatting
+- Keyword matching for adoption matchmaking
+
+---
+
+## 📚 Documentation
+
+Detailed documentation is available in the [`docs/`](docs/) folder:
+
+| Document | Description |
+|----------|------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, data flow, and component relationships |
+| [DATABASE.md](docs/DATABASE.md) | Complete database schema, RLS policies, and triggers |
+| [API.md](docs/API.md) | Edge Function API documentation and AI integration details |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, code style, and PR guidelines |
+| [ROADMAP.md](ROADMAP.md) | Feature roadmap and planned improvements |
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+
+**Built with 💚 for community cats everywhere**
+
+*TNR Tracker — because every cat deserves to be counted.*
+
+🐾
+
+</div>
