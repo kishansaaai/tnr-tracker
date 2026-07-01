@@ -244,6 +244,11 @@ npm run dev
 ```
 Open **http://localhost:5173** — create an account and start mapping colonies! 🐾
 
+### 🔑 Demo Admin Credentials
+For convenience during hackathon judging and evaluation, you can log in as an administrator using the quick-autofill button on the Sign In page, or manually enter the following credentials:
+- **Email**: `judge-demo@tnrtracker.app`
+- **Password**: `TNRDemo2026!`
+
 ---
 
 ## 📁 Project Structure
